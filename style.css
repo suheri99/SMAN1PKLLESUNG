@@ -2745,3 +2745,128 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 0.5 !important;
     }
 }
+
+/* ============================================
+   RESTORE: TYPING EFFECT + INPUT VALID GREEN
+   Versi aman tanpa kedip
+============================================ */
+
+/* === 1. TYPING EFFECT - AKTIFKAN KEMBALI === */
+.gold-text {
+    display: inline-block;
+    background: linear-gradient(90deg, #ca8a04, #dc2626, #fde047, #dc2626, #ca8a04);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+    min-height: 1.1em;
+    position: relative;
+}
+
+.gold-text::after {
+    content: '|';
+    -webkit-text-fill-color: var(--red-500);
+    animation: cursorBlink 0.8s step-end infinite;
+    margin-left: 4px;
+    font-weight: 300;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Pastikan typing tidak hilang di mobile */
+@media (max-width: 768px) {
+    .gold-text {
+        min-width: 5ch;
+        min-height: 1.2em;
+    }
+    
+    .gold-text::after {
+        animation: cursorBlink 0.8s step-end infinite !important;
+    }
+}
+
+/* === 2. INPUT VALID HIJAU - VERSI STABIL === */
+/* Border hijau ketika input valid, tanpa animasi berlebihan */
+.input-wrapper input.input-valid,
+.input-wrapper textarea.input-valid,
+.input-wrapper select.input-valid {
+    border-color: #22c55e !important;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12), 0 4px 12px -4px rgba(34, 197, 94, 0.2) !important;
+    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+/* Icon hijau ketika input valid */
+.input-wrapper input.input-valid ~ .input-icon,
+.input-wrapper textarea.input-valid ~ .input-icon,
+.input-wrapper select.input-valid ~ .input-icon {
+    color: #22c55e !important;
+    transition: color 0.25s ease !important;
+}
+
+/* Checkmark hijau kecil di kanan input */
+.input-wrapper input.input-valid::after,
+.input-wrapper textarea.input-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #22c55e;
+    font-weight: 700;
+    font-size: 1rem;
+    opacity: 0;
+    animation: checkmarkPop 0.3s ease-out forwards;
+}
+
+@keyframes checkmarkPop {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+/* Label hijau ketika input valid */
+.form-group:has(.input-valid) label {
+    color: #15803d !important;
+    transition: color 0.25s ease !important;
+}
+
+.form-group:has(.input-valid) .label-number {
+    background: linear-gradient(135deg, #86efac, #22c55e) !important;
+    color: white !important;
+    border-color: #16a34a !important;
+    transition: all 0.25s ease !important;
+}
+
+/* === 3. TRANSISI SMOOTH INPUT FOCUS === */
+.input-wrapper input,
+.input-wrapper textarea,
+.input-wrapper select {
+    transition: 
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.2s ease !important;
+}
+
+/* === 4. STEP CIRCLE HIJAU UNTUK STEP SELESAI === */
+.step.completed .step-circle {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border-color: #15803d !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
+}
+
+/* === 5. PROGRESS INDICATOR HIJAU === */
+.step-line.completed {
+    background: linear-gradient(90deg, #22c55e, #16a34a) !important;
+}
