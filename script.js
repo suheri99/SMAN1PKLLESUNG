@@ -1,7 +1,7 @@
 // ============================================
 // KONFIGURASI
 // ============================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqhub74-zw0J2OMW5yPL5kFf2u7wFlfOkinXQ2lnesulUJaTe-HGtOKGtLthUpH1FV/exec';
 
 // Elements
 const form = document.getElementById('dataForm');
