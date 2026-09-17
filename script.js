@@ -1829,7 +1829,7 @@ if (isMobile) {
     const typingTextEl = document.getElementById('typingText');
     
     if (typingTextEl) {
-        const typingWords = ['Siswa', 'Premium', 'Mewah', 'Royal', 'Berprestasi', 'Hebat'];
+        const typingWords = ['Siswa', 'SMAN', 'Satu', 'Pangkalan', 'Lesung', 'Hebat'];
         let typingWordIndex = 0;
         let typingCharIndex = 0;
         let typingIsDeleting = false;
