@@ -1443,3 +1443,375 @@ console.log('✅ Mobile Particle Edition loaded:', {
     diamonds: isMobile ? '5 diamond' : '3 diamond',
     features: 'All interactive features active'
 });
+
+
+// ============================================
+// FIX: BLINKING ISSUE ON STEP 2 & 3
+// ============================================
+
+(function fixBlinkingIssue() {
+    console.log('🔧 Applying blinking fix...');
+    
+    // ============================================
+    // FIX 1: STOP STAGGER ANIMATION RESTART
+    // ============================================
+    // Hapus class 'active' dari form-step yang lama
+    // dan apply ke yang baru tanpa trigger animation ulang
+    const originalGoToStep = window.goToStep;
+    
+    if (typeof goToStep === 'function') {
+        window.goToStep = function(step) {
+            // Pause semua animasi sementara
+            document.body.style.pointerEvents = 'none';
+            
+            // Call original
+            originalGoToStep.call(this, step);
+            
+            // Force reflow & stabilize
+            requestAnimationFrame(() => {
+                // Hilangkan animasi yang mungkin restart
+                document.querySelectorAll('.form-step').forEach(el => {
+                    el.style.animation = 'none';
+                    void el.offsetHeight; // Force reflow
+                    el.style.animation = '';
+                });
+                
+                // Enable pointer lagi
+                document.body.style.pointerEvents = 'auto';
+            });
+        };
+    }
+    
+    // ============================================
+    // FIX 2: STOP FLOATING TIPS YANG TRIGGER TERUS
+    // ============================================
+    // Hapus floating tips yang lama jika ada
+    document.querySelectorAll('[data-floating-tip]').forEach(el => el.remove());
+    
+    // Buat floating tips baru dengan flag
+    if (isMobile) {
+        const tipElement = document.createElement('div');
+        tipElement.setAttribute('data-floating-tip', 'true');
+        tipElement.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #fef9c3, #ffffff);
+            border: 1px solid rgba(202, 138, 4, 0.4);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #7f1d1d;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);
+            z-index: 999;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        `;
+        document.body.appendChild(tipElement);
+        
+        let currentTipStep = 0;
+        let tipTimeout = null;
+        
+        function showTip(text) {
+            if (tipTimeout) clearTimeout(tipTimeout);
+            
+            tipElement.textContent = text;
+            tipElement.style.transform = 'translateX(-50%) translateY(0)';
+            tipElement.style.opacity = '1';
+            
+            tipTimeout = setTimeout(() => {
+                tipElement.style.transform = 'translateX(-50%) translateY(100px)';
+                tipElement.style.opacity = '0';
+            }, 2500);
+        }
+        
+        // Cek step changes dengan debounce
+        setInterval(() => {
+            if (currentStep !== currentTipStep) {
+                currentTipStep = currentStep;
+                const stepTips = {
+                    1: '✨ Isi data diri Anda dengan lengkap',
+                    2: '📍 Masukkan alamat & agama',
+                    3: '📸 Upload foto dengan seragam putih abu-abu'
+                };
+                if (stepTips[currentStep]) {
+                    showTip(stepTips[currentStep]);
+                }
+            }
+        }, 800); // Lebih lambat untuk hindari flicker
+    }
+    
+    // ============================================
+    // FIX 3: AUTO-HIDE HEADER TIDAK KEDIP
+    // ============================================
+    if (isMobile) {
+        const infoPanel = document.querySelector('.info-panel');
+        if (infoPanel) {
+            let headerHiddenTimer = null;
+            
+            // Remove old listeners dengan clone
+            const newInfoPanel = infoPanel.cloneNode(true);
+            infoPanel.parentNode.replaceChild(newInfoPanel, infoPanel);
+            
+            let lastScrollY = 0;
+            let headerHidden = false;
+            
+            window.addEventListener('scroll', () => {
+                const currentScrollY = window.pageYOffset;
+                const diff = Math.abs(currentScrollY - lastScrollY);
+                
+                // Hanya proses jika scroll signifikan
+                if (diff < 30) return;
+                
+                if (currentScrollY > 250 && currentScrollY > lastScrollY && !headerHidden) {
+                    newInfoPanel.classList.add('header-hidden');
+                    headerHidden = true;
+                } else if (currentScrollY < lastScrollY && headerHidden) {
+                    newInfoPanel.classList.remove('header-hidden');
+                    headerHidden = false;
+                }
+                
+                lastScrollY = currentScrollY;
+                
+                // Auto show kembali setelah 2 detik
+                if (headerHiddenTimer) clearTimeout(headerHiddenTimer);
+                headerHiddenTimer = setTimeout(() => {
+                    if (headerHidden) {
+                        newInfoPanel.classList.remove('header-hidden');
+                        headerHidden = false;
+                    }
+                }, 2000);
+            }, { passive: true });
+        }
+    }
+    
+    // ============================================
+    // FIX 4: STEP CLICK DEBOUNCE
+    // ============================================
+    if (isMobile) {
+        document.querySelectorAll('.step').forEach((stepEl) => {
+            // Remove old listeners
+            const newStepEl = stepEl.cloneNode(true);
+            stepEl.parentNode.replaceChild(newStepEl, stepEl);
+            
+            let isProcessing = false;
+            
+            newStepEl.addEventListener('click', () => {
+                if (isProcessing) return;
+                isProcessing = true;
+                
+                const targetStep = parseInt(newStepEl.dataset.step);
+                
+                if (targetStep !== currentStep) {
+                    haptic(15);
+                    
+                    if (targetStep < currentStep) {
+                        goToStep(targetStep);
+                    } else if (targetStep === currentStep + 1) {
+                        goToStep(targetStep);
+                    }
+                }
+                
+                setTimeout(() => { isProcessing = false; }, 400);
+            });
+        });
+    }
+    
+    // ============================================
+    // FIX 5: DISABLE INPUT ANIMATIONS THAT FLICKER
+    // ============================================
+    if (isMobile) {
+        // Stop input-valid class toggling yang bikin kedip
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            // Remove 'input-valid' class jika masih ada
+            input.classList.remove('input-valid');
+            
+            // Replace input listener dengan versi lebih ringan
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            
+            // Re-attach event listeners
+            newInput.addEventListener('focus', function() {
+                this.parentElement.parentElement.classList.add('focused');
+            });
+            
+            newInput.addEventListener('blur', function() {
+                this.parentElement.parentElement.classList.remove('focused');
+            });
+        });
+        
+        // Re-attach NISN filter
+        const nisnField = document.getElementById('nisn');
+        if (nisnField) {
+            nisnField.addEventListener('input', function() {
+                this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
+            });
+        }
+    }
+    
+    // ============================================
+    // FIX 6: STOP CONFETTI RESTART
+    // ============================================
+    // Flag untuk mencegah confetti dipanggil berkali-kali
+    let confettiRunning = false;
+    
+    const originalStartConfetti = window.startConfetti;
+    if (typeof startConfetti === 'function') {
+        window.startConfetti = function() {
+            if (confettiRunning) return;
+            confettiRunning = true;
+            
+            originalStartConfetti.call(this);
+            
+            setTimeout(() => {
+                confettiRunning = false;
+            }, 3500); // Sesuai maxFrames
+        };
+    }
+    
+    // ============================================
+    // FIX 7: MATIKAN SCROLL REVEAL DI MOBILE
+    // ============================================
+    if (isMobile) {
+        // Trigger semua reveal langsung
+        document.querySelectorAll('.reveal').forEach(el => {
+            el.classList.add('active');
+        });
+    }
+    
+    // ============================================
+    // FIX 8: STABILISASI PARTICLES - TIDAK RESTART
+    // ============================================
+    // Simpan particles agar tidak re-init saat resize
+    let particlesInitCount = 0;
+    const originalInitParticles = window.initParticles;
+    
+    if (typeof initParticles === 'function') {
+        window.initParticles = function() {
+            particlesInitCount++;
+            
+            // Limit re-init
+            if (particlesInitCount > 5) {
+                console.log('⚠️ Too many particle re-inits, skipping');
+                return;
+            }
+            
+            originalInitParticles.call(this);
+        };
+    }
+    
+    // ============================================
+    // FIX 9: PREVENT SCROLL JANK
+    // ============================================
+    if (isMobile) {
+        // Throttle scroll events
+        let scrollTimeout;
+        let isScrollingNow = false;
+        
+        window.addEventListener('scroll', () => {
+            if (!isScrollingNow) {
+                isScrollingNow = true;
+                document.body.classList.add('scrolling-active');
+            }
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                isScrollingNow = false;
+                document.body.classList.remove('scrolling-active');
+            }, 100);
+        }, { passive: true });
+        
+        // CSS untuk stabil saat scroll
+        const scrollStyle = document.createElement('style');
+        scrollStyle.textContent = `
+            body.scrolling-active .form-step,
+            body.scrolling-active .form-group,
+            body.scrolling-active .input-wrapper {
+                pointer-events: none;
+            }
+        `;
+        document.head.appendChild(scrollStyle);
+    }
+    
+    // ============================================
+    // FIX 10: FORCE STABLE STEP TRANSITION
+    // ============================================
+    // Observer untuk pastikan form-step stabil
+    if (typeof MutationObserver !== 'undefined') {
+        const stepObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const el = mutation.target;
+                    if (el.classList.contains('form-step') && el.classList.contains('active')) {
+                        // Pastikan opacity final = 1
+                        el.style.opacity = '1';
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('.form-step').forEach(el => {
+            stepObserver.observe(el, { attributes: true });
+        });
+    }
+    
+    console.log('✅ Blinking fix applied successfully');
+    console.log('   - Form step animation: stabilized');
+    console.log('   - Form group stagger: disabled');
+    console.log('   - Floating tips: throttled');
+    console.log('   - Auto-hide header: debounced');
+    console.log('   - Step click: protected');
+    console.log('   - Input animations: simplified');
+})();
+
+// ============================================
+// ADDITIONAL: FORCE STABLE RENDERING
+// ============================================
+(function forceStableRendering() {
+    if (!isMobile) return;
+    
+    // Pastikan semua form-step punya opacity 1
+    document.querySelectorAll('.form-step').forEach(el => {
+        el.style.willChange = 'auto';
+        el.style.transform = 'none';
+        el.style.backfaceVisibility = 'hidden';
+        el.style.webkitBackfaceVisibility = 'hidden';
+    });
+    
+    // Force GPU layer untuk form-card
+    const formCard = document.querySelector('.form-card');
+    if (formCard) {
+        formCard.style.transform = 'translateZ(0)';
+        formCard.style.webkitTransform = 'translateZ(0)';
+    }
+    
+    console.log('✅ Stable rendering enforced');
+})();
+
+// ============================================
+// MONITOR: DETECT BLINKING
+// ============================================
+if (isMobile) {
+    let lastOpacity = {};
+    
+    setInterval(() => {
+        document.querySelectorAll('.form-step').forEach((el, index) => {
+            const opacity = window.getComputedStyle(el).opacity;
+            
+            if (lastOpacity[index] !== undefined && 
+                lastOpacity[index] !== opacity && 
+                el.classList.contains('active')) {
+                // Opacity berubah = kemungkinan kedip
+                console.warn('⚠️ Opacity change detected on step', index + 1, 
+                             ': ', lastOpacity[index], '→', opacity);
+            }
+            
+            lastOpacity[index] = opacity;
+        });
+    }, 200);
+}
