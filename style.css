@@ -2545,3 +2545,203 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         bottom: 16px;
     }
 }
+
+/* ============================================
+   FIX: BLINKING ISSUE ON STEP 2 & 3
+   Menimpa rule yang menyebabkan kedip-kedip
+============================================ */
+
+/* === FIX 1: HILANGKAN ANIMASI GANDA DI FORM STEP === */
+/* Hanya boleh 1 animasi aktif */
+.form-step.active {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Animasi sederhana khusus mobile */
+@media (max-width: 768px) {
+    .form-step.active {
+        animation: simpleStepIn 0.25s ease-out !important;
+    }
+    
+    @keyframes simpleStepIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+/* === FIX 2: HILANGKAN ANIMASI STAGGER DI FORM GROUP === */
+/* Stagger animation bikin kedip karena dipanggil ulang */
+.form-step .form-group {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Override backward fill-mode */
+.form-group {
+    animation-fill-mode: none !important;
+}
+
+/* === FIX 3: HILANGKAN ANIMASI FORM GROUP FADEIN === */
+@media (max-width: 1024px) and (hover: none) {
+    .form-step.active .form-group {
+        animation: none !important;
+    }
+    
+    .form-step.active .form-group:nth-child(1),
+    .form-step.active .form-group:nth-child(2),
+    .form-step.active .form-group:nth-child(3),
+    .form-step.active .form-group:nth-child(4),
+    .form-step.active .form-group:nth-child(5) {
+        animation-delay: 0s !important;
+    }
+}
+
+/* === FIX 4: HILANGKAN ANIMASI REVERSE YANG BIKIN KEDIP === */
+.form-step.reverse {
+    animation: none !important;
+}
+
+.form-step.active.reverse {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* === FIX 5: HILANGKAN ANIMASI STEP ENTRY === */
+@keyframes stepEntry {
+    from { opacity: 1; transform: none; }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 1; transform: none; }
+    to { opacity: 1; transform: none; }
+}
+
+/* === FIX 6: PASTIKAN INPUT TIDAK KEDIP SAAT FOCUS === */
+@media (max-width: 768px) {
+    .input-wrapper input,
+    .input-wrapper textarea,
+    .input-wrapper select {
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    
+    /* Matikan input-valid animation */
+    .input-wrapper input.input-valid,
+    .input-wrapper textarea.input-valid,
+    .input-wrapper select.input-valid {
+        animation: none !important;
+    }
+    
+    /* Matikan input glow di mobile */
+    .input-glow {
+        display: none !important;
+    }
+    
+    /* Matikan input border animation */
+    .input-border {
+        animation: none !important;
+        display: none !important;
+    }
+}
+
+/* === FIX 7: STABILISASI SCROLL PROGRESS === */
+.scroll-progress-bar {
+    will-change: width;
+    transform: translateZ(0);
+}
+
+/* === FIX 8: HILANGKAN ANIMASI YANG JALAN TERUS DI MOBILE === */
+@media (max-width: 768px) {
+    /* Matikan animasi yang bikin repaint */
+    .live-clock-content,
+    .clock-icon,
+    .toast-icon,
+    .info-footer .status-dot span {
+        animation: none !important;
+    }
+    
+    /* Matikan animasi pulse di step circle */
+    .step.active .step-circle {
+        animation: none !important;
+    }
+    
+    /* Matikan step line animation */
+    .step-line.active {
+        animation: none !important;
+    }
+    
+    /* Matikan diamond glow animation */
+    .school-divider .diamond,
+    .logo-corners span,
+    .modal-crown {
+        animation: none !important;
+    }
+}
+
+/* === FIX 9: STABILISASI STEP TRANSITION === */
+/* Pakai opacity transition biasa, bukan animation */
+.form-step {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.form-step.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Mobile - instant, no transition */
+@media (max-width: 768px) {
+    .form-step {
+        transition: none !important;
+    }
+    
+    .form-step.active {
+        opacity: 1 !important;
+    }
+}
+
+/* === FIX 10: HILANGKAN TRANSFORM YANG BIKIN KEDIP === */
+@media (max-width: 768px) {
+    .container,
+    .info-panel,
+    .form-panel,
+    .form-card,
+    .form-header,
+    .step-indicator,
+    .form-group,
+    .form-navigation,
+    .input-wrapper {
+        transform: none !important;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+    
+    /* Prevent repaint saat scroll */
+    .form-card,
+    .form-step,
+    .form-group {
+        contain: none !important;
+    }
+}
+
+/* === FIX 11: HEADER AUTO-HIDE TIDAK BIKIN KEDIP === */
+@media (max-width: 768px) {
+    .info-panel {
+        transition: opacity 0.3s ease !important;
+    }
+    
+    .info-panel.header-hidden {
+        transform: none !important;
+        opacity: 0.5 !important;
+    }
+}
