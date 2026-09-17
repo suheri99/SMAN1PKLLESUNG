@@ -3479,3 +3479,508 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
     }
 }
+/* ============================================
+   MOBILE INTERACTIVE ENHANCEMENT
+   Ringan tapi tetap interaktif
+============================================ */
+
+@media (max-width: 1024px) and (hover: none) {
+    
+    /* === 1. TAP FEEDBACK === */
+    .nav-btn,
+    .submit-btn,
+    .modal-btn,
+    .feature-item,
+    .step,
+    .upload-area,
+    .checkbox-wrapper,
+    .remove-btn {
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .nav-btn:active,
+    .submit-btn:active,
+    .modal-btn:active {
+        transform: scale(0.96) !important;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3) !important;
+    }
+    
+    .feature-item:active {
+        transform: scale(0.99) !important;
+        background: linear-gradient(135deg, rgba(253, 224, 71, 0.2), rgba(220, 38, 38, 0.1)) !important;
+    }
+    
+    .upload-area:active {
+        transform: scale(0.98) !important;
+        border-color: var(--red-600) !important;
+    }
+    
+    /* === 2. RIPPLE EFFECT RINGAN === */
+    .tap-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(253, 224, 71, 0.7), rgba(220, 38, 38, 0.3), transparent 70%);
+        transform: scale(0);
+        animation: tapRipple 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+        z-index: 10;
+    }
+    
+    @keyframes tapRipple {
+        to {
+            transform: scale(3);
+            opacity: 0;
+        }
+    }
+    
+    /* === 3. INPUT FOCUS INTERAKTIF === */
+    .input-wrapper {
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .input-wrapper:focus-within {
+        transform: translateY(-2px);
+    }
+    
+    .form-group label {
+        transition: all 0.25s ease;
+        position: relative;
+    }
+    
+    .input-wrapper:focus-within ~ label,
+    .form-group:focus-within label {
+        color: var(--red-700);
+        transform: translateX(2px);
+    }
+    
+    .form-group:focus-within .label-number {
+        background: var(--royal-gradient);
+        background-size: 200% auto;
+        color: white;
+        transform: scale(1.1) rotate(-5deg);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Icon bounce saat focus */
+    .input-wrapper:focus-within .input-icon {
+        animation: iconBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        color: var(--red-700);
+    }
+    
+    @keyframes iconBounce {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3) rotate(-10deg); }
+        100% { transform: scale(1.15) rotate(0); }
+    }
+    
+    /* === 4. INPUT VALID FEEDBACK === */
+    .input-wrapper input.input-valid,
+    .input-wrapper textarea.input-valid,
+    .input-wrapper select.input-valid {
+        border-color: #22c55e !important;
+        background: linear-gradient(135deg, #f0fdf4, #ffffff) !important;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15) !important;
+    }
+    
+    .input-wrapper input.input-valid ~ .input-icon,
+    .input-wrapper textarea.input-valid ~ .input-icon {
+        color: #22c55e;
+        animation: checkBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes checkBounce {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.4); }
+        100% { transform: scale(1); }
+    }
+    
+    /* === 5. STEP CIRCLE INTERAKTIF === */
+    .step {
+        cursor: pointer;
+    }
+    
+    .step:active .step-circle {
+        transform: scale(0.9) !important;
+    }
+    
+    .step.active .step-circle {
+        animation: stepPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes stepPulse {
+        0%, 100% { 
+            box-shadow: 
+                0 0 15px rgba(220, 38, 38, 0.5),
+                0 0 0 0 rgba(220, 38, 38, 0.7);
+        }
+        50% { 
+            box-shadow: 
+                0 0 25px rgba(220, 38, 38, 0.8),
+                0 0 0 8px rgba(220, 38, 38, 0);
+        }
+    }
+    
+    /* === 6. HEADER AUTO-HIDE === */
+    .info-panel {
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), 
+                    opacity 0.3s ease !important;
+    }
+    
+    .info-panel.header-hidden {
+        transform: translateY(-20px) !important;
+        opacity: 0.6;
+    }
+    
+    /* === 7. SCROLL PROGRESS ANIMATED === */
+    .scroll-progress-bar {
+        transition: width 0.15s ease-out !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .scroll-progress-bar::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            rgba(255, 255, 255, 0.6) 50%, 
+            transparent 100%);
+        animation: progressShine 2s ease-in-out infinite;
+    }
+    
+    @keyframes progressShine {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+    }
+    
+    /* === 8. SWIPE INDICATOR === */
+    .swipe-hint {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(202, 138, 4, 0.3);
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--red-700);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .swipe-hint.show {
+        display: flex;
+        opacity: 1;
+        animation: swipeHintFloat 2s ease-in-out infinite;
+    }
+    
+    @keyframes swipeHintFloat {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-5px); }
+    }
+    
+    .swipe-hint-icon {
+        animation: swipeArrow 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes swipeArrow {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(5px); }
+    }
+    
+    /* === 9. SUCCESS CELEBRATION MINI === */
+    .modal.active .modal-content {
+        animation: modalBounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+    }
+    
+    @keyframes modalBounceIn {
+        0% {
+            transform: scale(0.5) translateY(50px);
+            opacity: 0;
+        }
+        60% {
+            transform: scale(1.05) translateY(-10px);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Sparkle pada modal */
+    .modal.active .success-icon {
+        animation: successGlow 1.5s ease-in-out infinite !important;
+    }
+    
+    @keyframes successGlow {
+        0%, 100% {
+            filter: drop-shadow(0 4px 12px rgba(220, 38, 38, 0.4));
+        }
+        50% {
+            filter: drop-shadow(0 8px 25px rgba(220, 38, 38, 0.8)) 
+                    drop-shadow(0 0 30px rgba(234, 179, 8, 0.5));
+        }
+    }
+    
+    /* === 10. TOAST BOUNCE === */
+    .toast {
+        transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), 
+                    opacity 0.3s ease !important;
+    }
+    
+    /* === 11. LIVE CLOCK PULSE === */
+    .clock-time {
+        animation: clockPulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes clockPulse {
+        0%, 100% { 
+            color: var(--red-700);
+            text-shadow: 0 0 0 transparent;
+        }
+        50% { 
+            color: var(--red-600);
+            text-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+        }
+    }
+    
+    /* === 12. FEATURE ICON TAP === */
+    .feature-icon {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .feature-item:active .feature-icon {
+        transform: scale(1.15) rotate(10deg);
+        box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+    }
+    
+    /* === 13. CHECKBOX TAP === */
+    .checkbox-wrapper:active .checkmark {
+        transform: scale(1.15);
+    }
+    
+    .checkbox-wrapper input:checked ~ .checkmark {
+        animation: checkPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    @keyframes checkPop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    
+    /* === 14. UPLOAD AREA PULSE === */
+    .upload-area.dragover {
+        animation: uploadPulse 0.8s ease-in-out infinite;
+    }
+    
+    @keyframes uploadPulse {
+        0%, 100% { 
+            border-color: var(--red-600);
+            box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+        }
+        50% { 
+            border-color: var(--gold-500);
+            box-shadow: 0 0 0 15px rgba(220, 38, 38, 0);
+        }
+    }
+    
+    /* === 15. BUTTON LOADING ANIMATION === */
+    .submit-btn.loading {
+        animation: btnLoadingPulse 1.2s ease-in-out infinite;
+    }
+    
+    @keyframes btnLoadingPulse {
+        0%, 100% { 
+            box-shadow: 
+                0 4px 15px rgba(220, 38, 38, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        50% { 
+            box-shadow: 
+                0 8px 30px rgba(220, 38, 38, 0.8),
+                0 0 40px rgba(234, 179, 8, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+    }
+    
+    /* === 16. FORM STEP TRANSITION === */
+    .form-step.active {
+        animation: stepSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    
+    @keyframes stepSlideIn {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Step mundur */
+    .form-step.active.reverse {
+        animation: stepSlideInReverse 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    
+    @keyframes stepSlideInReverse {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* === 17. FLOATING LABEL MINI === */
+    .form-group:focus-within .hint {
+        color: var(--red-700);
+        transform: translateX(3px);
+        transition: all 0.3s ease;
+    }
+    
+    /* === 18. PULL TO REFRESH INDICATOR === */
+    .pull-indicator {
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid var(--gold-500);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+        z-index: 999;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .pull-indicator.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    
+    .pull-indicator svg {
+        width: 20px;
+        height: 20px;
+        color: var(--red-600);
+        animation: pullSpin 1s linear infinite;
+    }
+    
+    @keyframes pullSpin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* === 19. STAGGER ANIMATION UNTUK FORM GROUP === */
+    .form-step.active .form-group:nth-child(1) { animation-delay: 0.05s; }
+    .form-step.active .form-group:nth-child(2) { animation-delay: 0.1s; }
+    .form-step.active .form-group:nth-child(3) { animation-delay: 0.15s; }
+    .form-step.active .form-group:nth-child(4) { animation-delay: 0.2s; }
+    .form-step.active .form-group:nth-child(5) { animation-delay: 0.25s; }
+    
+    .form-step.active .form-group {
+        animation: formGroupFadeIn 0.4s ease backwards;
+    }
+    
+    @keyframes formGroupFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* === 20. INTERACTIVE SCHOOL LOGO === */
+    .school-logo-box:active {
+        transform: scale(0.98);
+    }
+    
+    .school-logo-box:active .school-logo-img {
+        animation: logoWiggle 0.5s ease;
+    }
+    
+    @keyframes logoWiggle {
+        0%, 100% { transform: rotate(0); }
+        25% { transform: rotate(-5deg) scale(1.05); }
+        75% { transform: rotate(5deg) scale(1.05); }
+    }
+    
+    /* === 21. STAT NUMBER BUMP === */
+    .stat-item:active .stat-number {
+        animation: numberBump 0.3s ease;
+    }
+    
+    @keyframes numberBump {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+    
+    /* === 22. PROGRESS BAR GLOW SAAT STEP AKTIF === */
+    .step-line.active {
+        animation: lineGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes lineGlow {
+        0%, 100% { 
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
+        }
+        50% { 
+            box-shadow: 0 0 20px rgba(220, 38, 38, 1),
+                        0 0 30px rgba(234, 179, 8, 0.6);
+        }
+    }
+    
+    /* === 23. ADD FOOTER INFO MENARIK === */
+    .info-footer {
+        position: relative;
+    }
+    
+    .info-footer .status-dot span {
+        animation: statusPulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes statusPulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        }
+        50% {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+        }
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+    .swipe-hint {
+        font-size: 0.68rem;
+        padding: 6px 12px;
+        bottom: 16px;
+    }
+}
