@@ -11,14 +11,13 @@ const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 const isLowEnd = isMobile && (navigator.hardwareConcurrency || 4) <= 4;
 const isAndroid = /Android/i.test(navigator.userAgent);
 const isOppo = /OPPO|CPH\d+/i.test(navigator.userAgent);
-const isMidRange = isAndroid && isMobile;
 
 if (isMobile) document.body.classList.add('is-mobile');
 if (isTouchDevice) document.body.classList.add('is-touch');
 if (isLowEnd) document.body.classList.add('is-low-end');
 
 console.log('📱 Device Info:', {
-    isMobile, isTouchDevice, isLowEnd, isAndroid, isOppo, isMidRange,
+    isMobile, isTouchDevice, isLowEnd, isAndroid, isOppo,
     cores: navigator.hardwareConcurrency,
     screen: `${window.innerWidth}x${window.innerHeight}`
 });
@@ -184,71 +183,119 @@ if (!isMobile && !isTouchDevice && window.innerWidth > 768) {
 }
 
 // ============================================
-// PARTICLE NETWORK - DESKTOP ONLY
+// PARTICLE NETWORK - WORKS ON MOBILE + DESKTOP
 // ============================================
-const canvas = document.getElementById('particleCanvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+const particleCanvas = document.getElementById('particleCanvas');
+const ctx = particleCanvas ? particleCanvas.getContext('2d', {
+    alpha: true,
+    desynchronized: isMobile // Better performance on mobile
+}) : null;
+
 let particles = [];
 let particleAnimationId = null;
 
 function resizeCanvas() {
-    if (!canvas) return;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    if (!particleCanvas) return;
+    
+    const dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
+    
+    particleCanvas.width = window.innerWidth * dpr;
+    particleCanvas.height = window.innerHeight * dpr;
+    particleCanvas.style.width = window.innerWidth + 'px';
+    particleCanvas.style.height = window.innerHeight + 'px';
+    
+    if (dpr > 1) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+    }
+}
+
+function getParticleCount() {
+    if (!isMobile) {
+        // Desktop - banyak partikel
+        return Math.min(Math.floor(window.innerWidth / 25), 50);
+    }
+    
+    // Mobile - adaptive
+    const cores = navigator.hardwareConcurrency || 4;
+    const memory = navigator.deviceMemory || 4;
+    
+    let score = 0;
+    if (cores >= 8) score += 3;
+    else if (cores >= 6) score += 2;
+    else if (cores >= 4) score += 1;
+    
+    if (memory >= 6) score += 3;
+    else if (memory >= 4) score += 2;
+    else if (memory >= 2) score += 1;
+    
+    if (isLowEnd) return 8;
+    if (score >= 5) return 18;
+    if (score >= 3) return 14;
+    if (score >= 2) return 10;
+    return 8;
 }
 
 class Particle {
     constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
         this.vx = (Math.random() - 0.5) * 0.4;
         this.vy = (Math.random() - 0.5) * 0.4;
         this.size = Math.random() * 1.8 + 1;
         this.color = Math.random() > 0.5 ? '#ca8a04' : '#dc2626';
+        this.alpha = Math.random() * 0.3 + 0.3;
     }
     
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        
+        if (this.x < 0 || this.x > window.innerWidth) this.vx *= -1;
+        if (this.y < 0 || this.y > window.innerHeight) this.vy *= -1;
+        
+        this.x = Math.max(0, Math.min(window.innerWidth, this.x));
+        this.y = Math.max(0, Math.min(window.innerHeight, this.y));
     }
     
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = this.alpha;
         ctx.fill();
     }
 }
 
 function initParticles() {
-    if (!ctx || isMobile) {
-        particles = [];
-        return;
-    }
-    
+    if (!ctx) return;
     particles = [];
-    const count = Math.min(window.innerWidth / 25, 50);
+    const count = getParticleCount();
     for (let i = 0; i < count; i++) {
         particles.push(new Particle());
     }
+    console.log(`✨ Created ${count} particles (${isMobile ? 'mobile' : 'desktop'})`);
 }
 
 function connectParticles() {
-    if (isMobile) return;
+    if (!ctx) return;
+    
+    const distance = isMobile ? 90 : 100;
+    const maxOpacity = isMobile ? 0.35 : 0.15;
     
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
             const dy = particles[i].y - particles[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            const distSq = dx * dx + dy * dy;
             
-            if (distance < 100) {
+            if (distSq < distance * distance) {
+                const dist = Math.sqrt(distSq);
+                const opacity = (1 - dist / distance) * maxOpacity;
+                
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(202, 138, 4, ${0.15 * (1 - distance / 100)})`;
-                ctx.lineWidth = 0.5;
+                ctx.strokeStyle = `rgba(202, 138, 4, ${opacity})`;
+                ctx.lineWidth = isMobile ? 0.6 : 0.5;
                 ctx.moveTo(particles[i].x, particles[i].y);
                 ctx.lineTo(particles[j].x, particles[j].y);
                 ctx.stroke();
@@ -257,37 +304,68 @@ function connectParticles() {
     }
 }
 
-function animateParticles() {
+// FPS limiting
+let lastFrameTime = 0;
+const FRAME_INTERVAL = isMobile ? (1000 / 24) : (1000 / 60); // 24 FPS mobile, 60 FPS desktop
+
+// Pause states
+let isScrolling = false;
+let isPageVisible = true;
+let scrollTimer;
+
+function animateParticles(timestamp) {
     if (!ctx) return;
     
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => { p.update(); p.draw(); });
-    connectParticles();
-    
     particleAnimationId = requestAnimationFrame(animateParticles);
+    
+    // Skip jika scroll atau tab tidak aktif
+    if (isScrolling || !isPageVisible) return;
+    
+    // FPS limit
+    if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
+    lastFrameTime = timestamp;
+    
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    
+    particles.forEach(p => {
+        p.update();
+        p.draw();
+    });
+    
+    connectParticles();
 }
 
-if (canvas && ctx && !isMobile) {
+// Initialize particles
+if (particleCanvas && ctx) {
     resizeCanvas();
     initParticles();
     particleAnimationId = requestAnimationFrame(animateParticles);
+    console.log('✅ Particle network started');
     
+    // Resize handler
+    let resizeTimer;
     window.addEventListener('resize', () => {
-        resizeCanvas();
-        initParticles();
-    });
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            resizeCanvas();
+            initParticles();
+        }, 300);
+    }, { passive: true });
     
+    // Pause on scroll (mobile)
+    if (isMobile) {
+        window.addEventListener('scroll', () => {
+            isScrolling = true;
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                isScrolling = false;
+            }, 150);
+        }, { passive: true });
+    }
+    
+    // Pause when tab hidden
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (particleAnimationId) {
-                cancelAnimationFrame(particleAnimationId);
-                particleAnimationId = null;
-            }
-        } else {
-            if (!particleAnimationId) {
-                particleAnimationId = requestAnimationFrame(animateParticles);
-            }
-        }
+        isPageVisible = !document.hidden;
     });
 }
 
@@ -370,7 +448,7 @@ function startCounters() {
 }
 
 // ============================================
-// RIPPLE EFFECT (Desktop click)
+// RIPPLE EFFECT
 // ============================================
 document.querySelectorAll('.submit-btn, .next-btn, .nav-btn, .modal-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -390,7 +468,7 @@ document.querySelectorAll('.submit-btn, .next-btn, .nav-btn, .modal-btn').forEac
 });
 
 // ============================================
-// TAP RIPPLE (Mobile touch)
+// TAP RIPPLE (Mobile)
 // ============================================
 if (isMobile) {
     const tappableElements = document.querySelectorAll(
@@ -492,7 +570,6 @@ function goToStep(step) {
         submitBtn.style.display = 'none';
     }
     
-    // Scroll ke form card
     const formCard = document.querySelector('.form-card');
     if (formCard) {
         if (isMobile) {
@@ -519,9 +596,7 @@ prevBtn.addEventListener('click', () => {
     }
 });
 
-// ============================================
-// STEP CLICK (Tap nomor step)
-// ============================================
+// Step click
 if (isMobile) {
     document.querySelectorAll('.step').forEach((stepEl) => {
         stepEl.addEventListener('click', () => {
@@ -580,7 +655,6 @@ if (isMobile) {
         }, { passive: true });
     }
     
-    // Swipe hint
     const swipeHint = document.createElement('div');
     swipeHint.className = 'swipe-hint';
     swipeHint.innerHTML = `
@@ -772,11 +846,9 @@ function formatFileSize(bytes) {
 }
 
 // ============================================
-// INPUT VALIDATION VISUAL FEEDBACK
+// INPUT VALIDATION VISUAL
 // ============================================
-function initInputFeedback() {
-    if (!isMobile) return;
-    
+if (isMobile) {
     const inputs = document.querySelectorAll('input, textarea, select');
     
     inputs.forEach(input => {
@@ -821,10 +893,8 @@ function initInputFeedback() {
     });
 }
 
-initInputFeedback();
-
 // ============================================
-// AUTO-HIDE HEADER ON SCROLL
+// AUTO-HIDE HEADER
 // ============================================
 if (isMobile) {
     const infoPanel = document.querySelector('.info-panel');
@@ -858,7 +928,7 @@ if (isMobile) {
 }
 
 // ============================================
-// PULL TO REFRESH FEEL
+// PULL TO REFRESH
 // ============================================
 if (isMobile) {
     const pullIndicator = document.createElement('div');
@@ -988,12 +1058,11 @@ function resetForm() {
     currentStep = 1;
     goToStep(1);
     
-    // Clear input valid classes
     document.querySelectorAll('.input-valid').forEach(el => el.classList.remove('input-valid'));
 }
 
 // ============================================
-// CONFETTI - OPTIMIZED
+// CONFETTI
 // ============================================
 const confettiCanvas = document.getElementById('confettiCanvas');
 const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
@@ -1238,7 +1307,7 @@ if (isMobile) {
 }
 
 // ============================================
-// SMART SCROLL UNTUK INPUT FOKUS
+// SMART SCROLL
 // ============================================
 if (isMobile) {
     document.querySelectorAll('input, textarea, select').forEach(input => {
@@ -1279,17 +1348,98 @@ window.addEventListener('orientationchange', () => {
     setTimeout(() => {
         resizeCanvas();
         resizeConfetti();
+        initParticles();
         window.scrollTo({ top: window.scrollY, behavior: 'auto' });
     }, 300);
 });
+
+// ============================================
+// DIAMOND PARTICLES - ADD MORE ON MOBILE
+// ============================================
+if (isMobile) {
+    const backgroundEl = document.querySelector('.background');
+    if (backgroundEl) {
+        const existingDiamonds = document.querySelectorAll('.diamond-particle');
+        const targetCount = 5;
+        const currentCount = existingDiamonds.length;
+        
+        if (currentCount < targetCount) {
+            const colors = [
+                'linear-gradient(135deg, #fde047, #dc2626)',
+                'linear-gradient(135deg, #dc2626, #fde047)',
+                'linear-gradient(135deg, #ca8a04, #b91c1c)',
+                'linear-gradient(135deg, #eab308, #991b1b)',
+                'linear-gradient(135deg, #facc15, #7f1d1d)'
+            ];
+            
+            const positions = [
+                { x: '12%', d: '22s' },
+                { x: '35%', d: '28s' },
+                { x: '55%', d: '25s' },
+                { x: '75%', d: '30s' },
+                { x: '90%', d: '24s' }
+            ];
+            
+            for (let i = currentCount; i < targetCount; i++) {
+                const diamond = document.createElement('div');
+                diamond.className = 'diamond-particle';
+                diamond.style.setProperty('--x', positions[i].x);
+                diamond.style.setProperty('--d', positions[i].d);
+                diamond.style.background = colors[i % colors.length];
+                backgroundEl.appendChild(diamond);
+            }
+            
+            console.log(`💎 Added ${targetCount - currentCount} diamond particles`);
+        }
+    }
+}
+
+// ============================================
+// PERFORMANCE MONITOR
+// ============================================
+if (isMobile) {
+    let frameCount = 0;
+    let lastCheck = performance.now();
+    let particleDisabled = false;
+    
+    function monitorPerformance() {
+        frameCount++;
+        const now = performance.now();
+        
+        if (now - lastCheck >= 1000) {
+            const fps = frameCount;
+            frameCount = 0;
+            lastCheck = now;
+            
+            // Jika FPS rendah, disable particles
+            if (fps < 20 && !particleDisabled && particleCanvas) {
+                console.log('⚠️ Low FPS (' + fps + '), disabling particles');
+                particleCanvas.style.display = 'none';
+                if (particleAnimationId) {
+                    cancelAnimationFrame(particleAnimationId);
+                    particleAnimationId = null;
+                }
+                particleDisabled = true;
+                return;
+            }
+        }
+        
+        requestAnimationFrame(monitorPerformance);
+    }
+    
+    // Monitor setelah 8 detik
+    setTimeout(monitorPerformance, 8000);
+}
 
 // ============================================
 // INITIALIZE
 // ============================================
 updateClock();
 
-console.log('✅ Mobile interactive enhancement loaded:', {
-    device: isOppo ? 'OPPO' : (isAndroid ? 'Android' : 'Other'),
+console.log('✅ Mobile Particle Edition loaded:', {
+    device: isOppo ? 'OPPO' : (isAndroid ? 'Android' : 'Mobile'),
     mode: isLowEnd ? 'LOW-END' : (isMobile ? 'MOBILE' : 'DESKTOP'),
-    features: '20 fitur interaktif aktif'
+    particles: isMobile ? 'Active (24 FPS)' : 'Active (60 FPS)',
+    diamonds: isMobile ? '5 diamond' : '3 diamond',
+    features: 'All interactive features active'
 });
