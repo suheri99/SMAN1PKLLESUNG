@@ -58,7 +58,7 @@ document.body.style.overflow = 'hidden';
 // TYPING EFFECT
 // ============================================
 const typingText = document.getElementById('typingText');
-const words = ['Siswa', 'Premium', 'Mewah', 'Royal'];
+const words = ['SMAN', 'SATU', 'PANGKALAN', 'LESUNG'];
 let wordIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
