@@ -1815,3 +1815,284 @@ if (isMobile) {
         });
     }, 200);
 }
+// ============================================
+// RESTORE: TYPING EFFECT + INPUT VALID GREEN
+// Versi aman tanpa kedip (debounced)
+// ============================================
+
+(function restoreTypingAndInputValid() {
+    console.log('🔧 Restoring typing effect & input valid green...');
+    
+    // ============================================
+    // 1. TYPING EFFECT - VERSI STABIL
+    // ============================================
+    const typingTextEl = document.getElementById('typingText');
+    
+    if (typingTextEl) {
+        const typingWords = ['Siswa', 'Premium', 'Mewah', 'Royal', 'Berprestasi', 'Hebat'];
+        let typingWordIndex = 0;
+        let typingCharIndex = 0;
+        let typingIsDeleting = false;
+        let typingTimer = null;
+        let typingActive = true;
+        
+        function runTyping() {
+            if (!typingActive) return;
+            
+            const currentWord = typingWords[typingWordIndex];
+            
+            if (typingIsDeleting) {
+                typingTextEl.textContent = currentWord.substring(0, typingCharIndex - 1);
+                typingCharIndex--;
+            } else {
+                typingTextEl.textContent = currentWord.substring(0, typingCharIndex + 1);
+                typingCharIndex++;
+            }
+            
+            let typeSpeed = typingIsDeleting ? 70 : 130;
+            
+            if (!typingIsDeleting && typingCharIndex === currentWord.length) {
+                typeSpeed = 2200; // Pause setelah selesai mengetik
+                typingIsDeleting = true;
+            } else if (typingIsDeleting && typingCharIndex === 0) {
+                typingIsDeleting = false;
+                typingWordIndex = (typingWordIndex + 1) % typingWords.length;
+                typeSpeed = 500;
+            }
+            
+            typingTimer = setTimeout(runTyping, typeSpeed);
+        }
+        
+        // Start typing setelah loading screen
+        setTimeout(() => {
+            runTyping();
+        }, 1800);
+        
+        // Pause typing saat tab tidak aktif (hemat resource)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                typingActive = false;
+                if (typingTimer) clearTimeout(typingTimer);
+            } else {
+                if (!typingActive) {
+                    typingActive = true;
+                    runTyping();
+                }
+            }
+        });
+        
+        console.log('✅ Typing effect restored');
+    }
+    
+    // ============================================
+    // 2. INPUT VALID HIJAU - VERSI DEBOUNCED
+    // ============================================
+    const debounceTimers = new Map();
+    const DEBOUNCE_DELAY = 400; // ms
+    
+    function validateInput(input) {
+        const value = input.value.trim();
+        let isValid = false;
+        
+        // Cek berdasarkan tipe & id
+        if (input.type === 'email') {
+            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        } else if (input.type === 'date') {
+            isValid = value !== '';
+        } else if (input.type === 'tel') {
+            isValid = /^[0-9+\-\s()]{8,15}$/.test(value);
+        } else if (input.id === 'nama') {
+            isValid = value.length >= 3;
+        } else if (input.id === 'nisn') {
+            isValid = value.length >= 3;
+        } else if (input.id === 'alamat') {
+            isValid = value.length >= 1;
+        } else if (input.id === 'tempatLahir') {
+            isValid = value.length >= 2;
+        } else if (input.tagName === 'SELECT') {
+            isValid = value !== '';
+        } else if (input.tagName === 'TEXTAREA') {
+            isValid = value.length >= 1;
+        } else {
+            isValid = value.length >= 1;
+        }
+        
+        return isValid;
+    }
+    
+    function applyValidState(input, isValid) {
+        if (isValid) {
+            if (!input.classList.contains('input-valid')) {
+                input.classList.add('input-valid');
+                // Haptic ringan (hanya sekali saat transition to valid)
+                if (isMobile && typeof haptic === 'function') {
+                    haptic(8);
+                }
+            }
+        } else {
+            input.classList.remove('input-valid');
+        }
+    }
+    
+    // Attach ke semua input
+    const allInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select');
+    
+    allInputs.forEach(input => {
+        // Skip hidden file input
+        if (input.type === 'file' || input.type === 'checkbox') return;
+        
+        // On input - debounced
+        input.addEventListener('input', function() {
+            const inputEl = this;
+            
+            // Clear timer lama untuk input ini
+            if (debounceTimers.has(inputEl)) {
+                clearTimeout(debounceTimers.get(inputEl));
+            }
+            
+            // Set timer baru
+            const timer = setTimeout(() => {
+                const isValid = validateInput(inputEl);
+                applyValidState(inputEl, isValid);
+                debounceTimers.delete(inputEl);
+            }, DEBOUNCE_DELAY);
+            
+            debounceTimers.set(inputEl, timer);
+        });
+        
+        // On blur - immediate check
+        input.addEventListener('blur', function() {
+            // Cancel pending debounce
+            if (debounceTimers.has(this)) {
+                clearTimeout(debounceTimers.get(this));
+                debounceTimers.delete(this);
+            }
+            
+            const isValid = validateInput(this);
+            applyValidState(this, isValid);
+        });
+        
+        // On change untuk select - immediate
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', function() {
+                const isValid = validateInput(this);
+                applyValidState(this, isValid);
+            });
+        }
+        
+        // Restore valid state jika sudah ada value (saat draft load)
+        setTimeout(() => {
+            if (input.value.trim() !== '') {
+                const isValid = validateInput(input);
+                applyValidState(input, isValid);
+            }
+        }, 1500);
+    });
+    
+    console.log(`✅ Input valid green restored for ${allInputs.length} inputs`);
+    
+    // ============================================
+    // 3. RESET VALID STATE SAAT FORM DI-RESET
+    // ============================================
+    const dataForm = document.getElementById('dataForm');
+    if (dataForm) {
+        // Observe reset
+        const originalReset = dataForm.reset.bind(dataForm);
+        dataForm.reset = function() {
+            originalReset();
+            // Remove all valid states
+            document.querySelectorAll('.input-valid').forEach(el => {
+                el.classList.remove('input-valid');
+            });
+            console.log('🔄 Form reset - valid states cleared');
+        };
+    }
+    
+    // ============================================
+    // 4. STEP COMPLETED - HIJAU
+    // ============================================
+    // Observer untuk step completion
+    const stepObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.classList.contains('step') && 
+                mutation.target.classList.contains('completed')) {
+                // Pastikan step line berikutnya juga hijau
+                const stepIndex = Array.from(document.querySelectorAll('.step')).indexOf(mutation.target);
+                const stepLines = document.querySelectorAll('.step-line');
+                if (stepLines[stepIndex]) {
+                    stepLines[stepIndex].classList.add('completed');
+                }
+            }
+        });
+    });
+    
+    document.querySelectorAll('.step').forEach(step => {
+        stepObserver.observe(step, { attributes: true, attributeFilter: ['class'] });
+    });
+    
+    // ============================================
+    // 5. FIX: TYPING TEXT TIDAK KOSONG SAAT LOADING
+    // ============================================
+    // Pastikan typing text punya konten default
+    if (typingTextEl && !typingTextEl.textContent.trim()) {
+        typingTextEl.textContent = 'Siswa';
+    }
+    
+    // ============================================
+    // 6. SMOOTH TRANSITION UNTUK INPUT VALID
+    // ============================================
+    // Tambahkan style untuk smooth transition (kalau belum ada)
+    if (!document.getElementById('input-valid-style')) {
+        const style = document.createElement('style');
+        style.id = 'input-valid-style';
+        style.textContent = `
+            .input-wrapper input.input-valid,
+            .input-wrapper textarea.input-valid,
+            .input-wrapper select.input-valid {
+                border-color: #22c55e !important;
+                background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12), 0 4px 12px -4px rgba(34, 197, 94, 0.2) !important;
+            }
+            
+            .input-wrapper input.input-valid ~ .input-icon,
+            .input-wrapper textarea.input-valid ~ .input-icon,
+            .input-wrapper select.input-valid ~ .input-icon {
+                color: #22c55e !important;
+            }
+            
+            .form-group:has(.input-valid) label {
+                color: #15803d !important;
+            }
+            
+            .form-group:has(.input-valid) .label-number {
+                background: linear-gradient(135deg, #86efac, #22c55e) !important;
+                color: white !important;
+                border-color: #16a34a !important;
+            }
+            
+            .step.completed .step-circle {
+                background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+                border-color: #15803d !important;
+                color: white !important;
+                box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
+            }
+            
+            /* Typing cursor animation */
+            .gold-text::after {
+                animation: cursorBlink 0.8s step-end infinite !important;
+            }
+            
+            @keyframes cursorBlink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    console.log('✅ All restorations complete:');
+    console.log('   - Typing effect: active');
+    console.log('   - Input valid green: active');
+    console.log('   - Step completed green: active');
+    console.log('   - Debounce: 400ms');
+})();
