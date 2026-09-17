@@ -1250,3 +1250,645 @@ console.log('✅ Scroll optimization loaded:', {
     performance: 'OPTIMIZED',
     scrollFix: 'ACTIVE'
 });
+
+// ============================================
+// MOBILE INTERACTIVE ENHANCEMENT
+// Sentuhan interaktif yang ringan untuk smartphone
+// ============================================
+
+// ============================================
+// 1. HAPTIC FEEDBACK
+// ============================================
+function haptic(pattern = 10) {
+    if ('vibrate' in navigator && isMobile) {
+        try {
+            navigator.vibrate(pattern);
+        } catch (e) {
+            // Silent fail
+        }
+    }
+}
+
+// ============================================
+// 2. TAP RIPPLE EFFECT
+// ============================================
+function addTapRipple() {
+    if (!isMobile) return;
+    
+    const tappableElements = document.querySelectorAll(
+        '.nav-btn, .submit-btn, .modal-btn, .feature-item, ' +
+        '.step, .upload-area, .checkbox-wrapper, .next-btn, .prev-btn'
+    );
+    
+    tappableElements.forEach(el => {
+        el.addEventListener('touchstart', function(e) {
+            const touch = e.touches[0];
+            const rect = this.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            const ripple = document.createElement('span');
+            ripple.className = 'tap-ripple';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.style.width = ripple.style.height = '20px';
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => ripple.remove(), 600);
+        }, { passive: true });
+        
+        // Haptic feedback saat tap
+        el.addEventListener('touchstart', () => {
+            haptic(15);
+        }, { passive: true });
+    });
+}
+
+// Init setelah DOM ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addTapRipple);
+} else {
+    addTapRipple();
+}
+
+// ============================================
+// 3. INPUT VALIDATION VISUAL FEEDBACK
+// ============================================
+function initInputFeedback() {
+    if (!isMobile) return;
+    
+    const inputs = document.querySelectorAll('input, textarea, select');
+    
+    inputs.forEach(input => {
+        // Validasi realtime
+        input.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            // Hapus state valid dulu
+            this.classList.remove('input-valid');
+            
+            // Cek validitas berdasarkan tipe
+            let isValid = false;
+            
+            if (this.type === 'email') {
+                isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            } else if (this.type === 'date') {
+                isValid = value !== '';
+            } else if (this.id === 'nisn') {
+                isValid = value.length >= 3;
+            } else if (this.id === 'nama') {
+                isValid = value.length >= 3;
+            } else if (this.id === 'alamat') {
+                isValid = value.length >= 1;
+            } else if (this.tagName === 'SELECT') {
+                isValid = value !== '';
+            } else {
+                isValid = value.length >= 1;
+            }
+            
+            // Tambah class valid
+            if (isValid) {
+                this.classList.add('input-valid');
+                haptic(8); // Getar halus saat valid
+            }
+        });
+        
+        // Select change
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', function() {
+                if (this.value !== '') {
+                    this.classList.add('input-valid');
+                    haptic(8);
+                } else {
+                    this.classList.remove('input-valid');
+                }
+            });
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initInputFeedback);
+} else {
+    initInputFeedback();
+}
+
+// ============================================
+// 4. HEADER AUTO-HIDE SAAT SCROLL
+// ============================================
+if (isMobile) {
+    const infoPanel = document.querySelector('.info-panel');
+    let lastScrollY = 0;
+    let headerHidden = false;
+    let headerScrollTimer;
+    
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.pageYOffset;
+        
+        // Sembunyikan header saat scroll ke bawah (setelah 200px)
+        if (currentScrollY > 200 && currentScrollY > lastScrollY && !headerHidden) {
+            infoPanel?.classList.add('header-hidden');
+            headerHidden = true;
+        }
+        
+        // Tampilkan lagi saat scroll ke atas
+        if (currentScrollY < lastScrollY && headerHidden) {
+            infoPanel?.classList.remove('header-hidden');
+            headerHidden = false;
+        }
+        
+        lastScrollY = currentScrollY;
+        
+        // Reset timer
+        clearTimeout(headerScrollTimer);
+        headerScrollTimer = setTimeout(() => {
+            if (headerHidden) {
+                infoPanel?.classList.remove('header-hidden');
+                headerHidden = false;
+            }
+        }, 2000);
+    }, { passive: true });
+}
+
+// ============================================
+// 5. SWIPE NAVIGATION ANTAR STEP
+// ============================================
+if (isMobile) {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let isSwiping = false;
+    
+    const formCard = document.querySelector('.form-card');
+    
+    if (formCard) {
+        formCard.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+            isSwiping = true;
+        }, { passive: true });
+        
+        formCard.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            
+            const deltaY = Math.abs(e.changedTouches[0].screenY - touchStartY);
+            
+            // Kalau scroll vertikal, batalkan swipe
+            if (deltaY > 30) {
+                isSwiping = false;
+            }
+        }, { passive: true });
+        
+        formCard.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            
+            touchEndX = e.changedTouches[0].screenX;
+            const deltaX = touchEndX - touchStartX;
+            
+            // Swipe ke kiri (next step)
+            if (deltaX < -50 && currentStep < totalSteps) {
+                haptic(20);
+                goToStep(currentStep + 1);
+            }
+            
+            // Swipe ke kanan (prev step)
+            if (deltaX > 50 && currentStep > 1) {
+                haptic(20);
+                goToStep(currentStep - 1);
+            }
+            
+            isSwiping = false;
+        }, { passive: true });
+    }
+    
+    // Show swipe hint
+    const swipeHint = document.createElement('div');
+    swipeHint.className = 'swipe-hint';
+    swipeHint.innerHTML = `
+        <span>👈</span>
+        <span>Geser untuk navigasi</span>
+        <span class="swipe-hint-icon">👉</span>
+    `;
+    document.body.appendChild(swipeHint);
+    
+    // Show hint pertama kali
+    setTimeout(() => {
+        swipeHint.classList.add('show');
+        setTimeout(() => swipeHint.classList.remove('show'), 4000);
+    }, 3000);
+}
+
+// ============================================
+// 6. STEP CLICK (Tap untuk pindah step)
+// ============================================
+if (isMobile) {
+    document.querySelectorAll('.step').forEach((stepEl) => {
+        stepEl.addEventListener('click', () => {
+            const targetStep = parseInt(stepEl.dataset.step);
+            
+            if (targetStep === currentStep) return;
+            
+            haptic(15);
+            
+            // Hanya bisa ke step yang sudah dilewati
+            if (targetStep < currentStep) {
+                goToStep(targetStep);
+            } else if (targetStep === currentStep + 1) {
+                goToStep(targetStep);
+            }
+        });
+    });
+}
+
+// ============================================
+// 7. PULL TO REFRESH FEEL
+// ============================================
+if (isMobile) {
+    const pullIndicator = document.createElement('div');
+    pullIndicator.className = 'pull-indicator';
+    pullIndicator.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 4V1M12 1L8 5M12 1L16 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    `;
+    document.body.appendChild(pullIndicator);
+    
+    let pullStartY = 0;
+    let pullCurrentY = 0;
+    let isPulling = false;
+    
+    window.addEventListener('touchstart', (e) => {
+        if (window.pageYOffset === 0) {
+            pullStartY = e.touches[0].screenY;
+            isPulling = true;
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        pullCurrentY = e.touches[0].screenY;
+        const deltaY = pullCurrentY - pullStartY;
+        
+        if (deltaY > 60 && deltaY < 150) {
+            pullIndicator.classList.add('show');
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchend', () => {
+        if (!isPulling) return;
+        
+        const deltaY = pullCurrentY - pullStartY;
+        
+        if (deltaY > 100) {
+            haptic(30);
+            setTimeout(() => {
+                pullIndicator.classList.remove('show');
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            }, 500);
+        } else {
+            pullIndicator.classList.remove('show');
+        }
+        
+        isPulling = false;
+        pullCurrentY = 0;
+    }, { passive: true });
+}
+
+// ============================================
+// 8. STEP REVERSE ANIMATION
+// ============================================
+// Override goToStep untuk tambahkan animasi reverse
+const originalGoToStep = window.goToStep || goToStep;
+if (typeof goToStep === 'function') {
+    window.goToStep = function(step) {
+        const prevStep = currentStep;
+        
+        // Panggil fungsi asli
+        originalGoToStep.call(this, step);
+        
+        // Tambah class reverse jika mundur
+        if (step < prevStep) {
+            document.querySelectorAll('.form-step').forEach(el => {
+                if (el.classList.contains('active')) {
+                    el.classList.add('reverse');
+                }
+            });
+        }
+    };
+    
+    // Rebind event listener untuk next/prev buttons
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            if (currentStep < totalSteps) {
+                haptic(15);
+                window.goToStep(currentStep + 1);
+            }
+        };
+    }
+    
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (currentStep > 1) {
+                haptic(15);
+                window.goToStep(currentStep - 1);
+            }
+        };
+    }
+}
+
+// ============================================
+// 9. TOAST HAPTIC & ENHANCED
+// ============================================
+const originalShowToast = window.showToast || showToast;
+if (typeof showToast === 'function') {
+    window.showToast = function(message, type = 'success') {
+        // Haptic pattern berbeda per tipe
+        if (type === 'error') {
+            haptic([30, 30, 30]); // Getar 3x untuk error
+        } else if (type === 'success') {
+            haptic([15, 30, 15]); // Getar sukses
+        }
+        
+        return originalShowToast.call(this, message, type);
+    };
+}
+
+// ============================================
+// 10. MODAL HAPTIC
+// ============================================
+if (typeof showModal === 'function') {
+    const originalShowModal = showModal;
+    window.showModal = function() {
+        haptic([20, 50, 20, 50, 20]); // Getar celebration
+        return originalShowModal.call(this);
+    };
+}
+
+// ============================================
+// 11. FORM SUBMIT HAPTIC
+// ============================================
+if (submitBtn) {
+    submitBtn.addEventListener('touchstart', () => {
+        haptic([15, 20, 15]);
+    }, { passive: true });
+}
+
+// ============================================
+// 12. CHECKBOX HAPTIC
+// ============================================
+const termsCheckbox = document.getElementById('terms');
+if (termsCheckbox) {
+    termsCheckbox.addEventListener('change', () => {
+        if (termsCheckbox.checked) {
+            haptic(20);
+        }
+    });
+}
+
+// ============================================
+// 13. UPLOAD SUCCESS HAPTIC
+// ============================================
+if (fileInput) {
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            haptic([15, 30]);
+        }
+    });
+}
+
+// ============================================
+// 14. VALIDATION ERROR HAPTIC
+// ============================================
+// Override shakeElement untuk tambah haptic
+if (typeof shakeElement === 'function') {
+    const originalShake = shakeElement;
+    window.shakeElement = function(element) {
+        haptic([50, 30, 50]); // Getar error
+        return originalShake.call(this, element);
+    };
+}
+
+// ============================================
+// 15. FLOATING TIPS
+// ============================================
+if (isMobile) {
+    const tips = [
+        '💡 Geser layar untuk navigasi antar step',
+        '👆 Tap nomor step untuk lompat',
+        '📸 Pastikan foto terlihat jelas',
+        '✅ Semua field wajib diisi',
+        '🎯 Cek data sebelum submit'
+    ];
+    
+    let tipIndex = 0;
+    const tipElement = document.createElement('div');
+    tipElement.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: linear-gradient(135deg, #fef9c3, #ffffff);
+        border: 1px solid rgba(202, 138, 4, 0.4);
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #7f1d1d;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);
+        z-index: 999;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        opacity: 0;
+        pointer-events: none;
+        max-width: 90%;
+        text-align: center;
+    `;
+    document.body.appendChild(tipElement);
+    
+    function showTip(text) {
+        tipElement.textContent = text;
+        tipElement.style.transform = 'translateX(-50%) translateY(0)';
+        tipElement.style.opacity = '1';
+        
+        setTimeout(() => {
+            tipElement.style.transform = 'translateX(-50%) translateY(100px)';
+            tipElement.style.opacity = '0';
+        }, 3000);
+    }
+    
+    // Tips muncul saat ganti step
+    let lastStep = 1;
+    setInterval(() => {
+        if (currentStep !== lastStep) {
+            lastStep = currentStep;
+            
+            const stepTips = {
+                1: '✨ Isi data diri Anda dengan lengkap',
+                2: '📍 Masukkan alamat & agama',
+                3: '📸 Upload foto dengan seragam putih abu-abu'
+            };
+            
+            showTip(stepTips[currentStep] || tips[tipIndex % tips.length]);
+            tipIndex++;
+        }
+    }, 500);
+}
+
+// ============================================
+// 16. SCROLL SNAP UNTUK FOKUS FORM
+// ============================================
+if (isMobile) {
+    // Scroll otomatis ke input yang sedang fokus
+    document.querySelectorAll('input, textarea, select').forEach(input => {
+        input.addEventListener('focus', function() {
+            setTimeout(() => {
+                const rect = this.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const keyboardHeight = 300; // Estimasi keyboard
+                const availableHeight = viewportHeight - keyboardHeight;
+                
+                // Kalau input tertutup keyboard, scroll ke atas
+                if (rect.bottom > availableHeight) {
+                    const scrollAmount = rect.bottom - availableHeight + 30;
+                    window.scrollBy({
+                        top: scrollAmount,
+                        behavior: 'auto'
+                    });
+                }
+            }, 300);
+        });
+    });
+}
+
+// ============================================
+// 17. DOUBLE TAP UNTUK FOKUS INPUT
+// ============================================
+if (isMobile) {
+    let lastTap = 0;
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                // Double tap detected
+                e.preventDefault();
+                input.focus();
+                // Select all text
+                input.select();
+                haptic(15);
+            }
+            lastTap = now;
+        }, { passive: false });
+    });
+}
+
+// ============================================
+// 18. AUTO-SAVE PROGRESS (SILENT)
+// ============================================
+if (isMobile) {
+    const formFields = ['nama', 'kelas', 'nisn', 'tempatLahir', 'tanggalLahir', 'alamat', 'agama'];
+    
+    // Save ke localStorage setiap input
+    formFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('change', () => {
+                try {
+                    const savedData = JSON.parse(localStorage.getItem('formDraft') || '{}');
+                    savedData[fieldId] = field.value;
+                    localStorage.setItem('formDraft', JSON.stringify(savedData));
+                } catch (e) {}
+            });
+        }
+    });
+    
+    // Restore saat load
+    try {
+        const savedData = JSON.parse(localStorage.getItem('formDraft') || '{}');
+        Object.keys(savedData).forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && savedData[fieldId]) {
+                field.value = savedData[fieldId];
+                field.classList.add('input-valid');
+            }
+        });
+    } catch (e) {}
+    
+    // Clear draft setelah submit sukses
+    if (form) {
+        form.addEventListener('submit', () => {
+            setTimeout(() => {
+                try {
+                    localStorage.removeItem('formDraft');
+                } catch (e) {}
+            }, 2000);
+        });
+    }
+}
+
+// ============================================
+// 19. SHAKE ANIMATION UNTUK VALIDASI ERROR
+// ============================================
+// Sudah ada di script utama, tapi tambahkan efek mobile-friendly
+if (isMobile) {
+    const mobileStyle = document.createElement('style');
+    mobileStyle.textContent = `
+        @keyframes mobileShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .form-group.error {
+            animation: mobileShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+        }
+        .form-group.error .input-wrapper input,
+        .form-group.error .input-wrapper textarea,
+        .form-group.error .input-wrapper select {
+            border-color: #ef4444 !important;
+            background: #fef2f2 !important;
+        }
+    `;
+    document.head.appendChild(mobileStyle);
+}
+
+// ============================================
+// 20. LOADING STATE VISUAL
+// ============================================
+if (isMobile && submitBtn) {
+    // Observe loading class
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                if (submitBtn.classList.contains('loading')) {
+                    haptic([15, 30, 15, 30]);
+                }
+            }
+        });
+    });
+    
+    observer.observe(submitBtn, { attributes: true });
+}
+
+// ============================================
+// LOG
+// ============================================
+console.log('✨ Mobile interactive enhancement loaded:', {
+    features: [
+        'Haptic feedback',
+        'Tap ripple',
+        'Input validation visual',
+        'Auto-hide header',
+        'Swipe navigation',
+        'Step click',
+        'Pull to refresh',
+        'Reverse animation',
+        'Toast haptic',
+        'Modal celebration',
+        'Floating tips',
+        'Auto-save draft',
+        'Smart scroll',
+        'Double tap select'
+    ].length + ' fitur aktif',
+    device: isMobile ? 'MOBILE' : 'DESKTOP'
+});
