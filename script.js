@@ -1,9 +1,30 @@
 // ============================================
 // KONFIGURASI
 // ============================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqhub74-zw0J2OMW5yPL5kFf2u7wFlfOkinXQ2lnesulUJaTe-HGtOKGtLthUpH1FV/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 
-// Elements
+// ============================================
+// DEVICE DETECTION & MOBILE OPTIMIZATION
+// ============================================
+const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const isLowEnd = isMobile && (navigator.hardwareConcurrency || 4) <= 4;
+
+if (isMobile) document.body.classList.add('is-mobile');
+if (isTouchDevice) document.body.classList.add('is-touch');
+if (isLowEnd) document.body.classList.add('is-low-end');
+
+console.log('📱 Device Info:', {
+    isMobile,
+    isTouchDevice,
+    isLowEnd,
+    cores: navigator.hardwareConcurrency,
+    screen: `${window.innerWidth}x${window.innerHeight}`
+});
+
+// ============================================
+// ELEMENTS
+// ============================================
 const form = document.getElementById('dataForm');
 const fileInput = document.getElementById('foto');
 const uploadArea = document.getElementById('uploadArea');
@@ -41,7 +62,6 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 loadingScreen.classList.add('hidden');
                 document.body.style.overflow = 'auto';
-                // Trigger reveal animations
                 triggerReveal();
                 startCounters();
             }, 500);
@@ -51,14 +71,13 @@ window.addEventListener('load', () => {
     }, 150);
 });
 
-// Prevent scroll during loading
 document.body.style.overflow = 'hidden';
 
 // ============================================
 // TYPING EFFECT
 // ============================================
 const typingText = document.getElementById('typingText');
-const words = ['SMAN', 'SATU', 'PANGKALAN', 'LESUNG'];
+const words = ['Siswa', 'Premium', 'Mewah', 'Royal'];
 let wordIndex = 0;
 let charIndex = 0;
 let isDeleting = false;
@@ -102,8 +121,11 @@ function updateClock() {
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     
-    document.getElementById('liveClock').textContent = `${hours}:${minutes}:${seconds}`;
-    document.getElementById('liveDate').textContent = 
+    const clockEl = document.getElementById('liveClock');
+    const dateEl = document.getElementById('liveDate');
+    
+    if (clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+    if (dateEl) dateEl.textContent = 
         `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 }
 
@@ -111,73 +133,90 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ============================================
-// CURSOR EFFECTS
+// CURSOR EFFECTS - DISABLED ON MOBILE
 // ============================================
-if (window.innerWidth > 768) {
+if (!isMobile && !isTouchDevice && window.innerWidth > 768) {
     let mouseX = 0, mouseY = 0;
     let glowX = 0, glowY = 0;
+    let cursorAnimId = null;
     
     document.addEventListener('mousemove', (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
         
-        // Sparkle follows instantly
-        cursorSparkle.style.left = mouseX + 'px';
-        cursorSparkle.style.top = mouseY + 'px';
-        cursorSparkle.classList.add('active');
+        if (cursorSparkle) {
+            cursorSparkle.style.left = mouseX + 'px';
+            cursorSparkle.style.top = mouseY + 'px';
+            cursorSparkle.classList.add('active');
+        }
     });
     
-    // Smooth glow animation
     function animateGlow() {
         glowX += (mouseX - glowX) * 0.1;
         glowY += (mouseY - glowY) * 0.1;
         
-        cursorGlow.style.left = glowX + 'px';
-        cursorGlow.style.top = glowY + 'px';
+        if (cursorGlow) {
+            cursorGlow.style.left = glowX + 'px';
+            cursorGlow.style.top = glowY + 'px';
+        }
         
-        requestAnimationFrame(animateGlow);
+        cursorAnimId = requestAnimationFrame(animateGlow);
     }
     animateGlow();
     
     document.addEventListener('mouseleave', () => {
-        cursorGlow.style.opacity = '0';
-        cursorSparkle.classList.remove('active');
+        if (cursorGlow) cursorGlow.style.opacity = '0';
+        if (cursorSparkle) cursorSparkle.classList.remove('active');
     });
     
     document.addEventListener('mouseenter', () => {
-        cursorGlow.style.opacity = '1';
-        cursorSparkle.classList.add('active');
+        if (cursorGlow) cursorGlow.style.opacity = '1';
+        if (cursorSparkle) cursorSparkle.classList.add('active');
     });
 }
 
 // ============================================
-// PARTICLE NETWORK
+// PARTICLE NETWORK - OPTIMIZED FOR MOBILE
 // ============================================
 const canvas = document.getElementById('particleCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas ? canvas.getContext('2d') : null;
 let particles = [];
-let mouse = { x: null, y: null };
+let particleAnimationId = null;
 
 function resizeCanvas() {
+    if (!canvas) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-document.addEventListener('mousemove', (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
+function initParticles() {
+    if (!ctx || isMobile) {
+        particles = [];
+        return;
+    }
+    
+    particles = [];
+    let count;
+    if (isLowEnd) {
+        count = 15;
+    } else if (isMobile) {
+        count = 25;
+    } else {
+        count = Math.min(window.innerWidth / 25, 50);
+    }
+    
+    for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+    }
+}
 
 class Particle {
     constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.size = Math.random() * 2 + 1;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.size = Math.random() * 1.8 + 1;
         this.color = Math.random() > 0.5 ? '#ca8a04' : '#dc2626';
     }
     
@@ -198,24 +237,20 @@ class Particle {
     }
 }
 
-function initParticles() {
-    particles = [];
-    const count = Math.min(window.innerWidth / 15, 80);
-    for (let i = 0; i < count; i++) {
-        particles.push(new Particle());
-    }
-}
-
 function connectParticles() {
+    if (isMobile) return;
+    
+    const maxDistance = 100;
+    
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
             const dy = particles[i].y - particles[j].y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < 120) {
+            if (distance < maxDistance) {
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(202, 138, 4, ${0.15 * (1 - distance / 120)})`;
+                ctx.strokeStyle = `rgba(202, 138, 4, ${0.15 * (1 - distance / maxDistance)})`;
                 ctx.lineWidth = 0.5;
                 ctx.moveTo(particles[i].x, particles[i].y);
                 ctx.lineTo(particles[j].x, particles[j].y);
@@ -225,53 +260,99 @@ function connectParticles() {
     }
 }
 
-function animateParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+let lastFrameTime = 0;
+const FRAME_INTERVAL = isMobile ? 50 : 16;
+
+function animateParticles(timestamp) {
+    if (!ctx) return;
     
-    particles.forEach(p => {
-        p.update();
-        p.draw();
-    });
+    if (timestamp - lastFrameTime >= FRAME_INTERVAL) {
+        lastFrameTime = timestamp;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        
+        connectParticles();
+    }
     
-    connectParticles();
-    requestAnimationFrame(animateParticles);
+    particleAnimationId = requestAnimationFrame(animateParticles);
 }
 
-initParticles();
-animateParticles();
-
-// ============================================
-// SCROLL PROGRESS
-// ============================================
-window.addEventListener('scroll', () => {
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const progress = (scrollTop / scrollHeight) * 100;
-    scrollProgress.style.width = progress + '%';
-});
-
-// ============================================
-// 3D TILT EFFECT
-// ============================================
-document.querySelectorAll('[data-tilt]').forEach(element => {
-    element.addEventListener('mousemove', (e) => {
-        const rect = element.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const rotateX = (y - centerY) / 25;
-        const rotateY = (centerX - x) / 25;
-        
-        element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+if (canvas && ctx) {
+    resizeCanvas();
+    initParticles();
+    
+    if (!isLowEnd && !isMobile) {
+        particleAnimationId = requestAnimationFrame(animateParticles);
+    }
+    
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
     });
     
-    element.addEventListener('mouseleave', () => {
-        element.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (particleAnimationId) {
+                cancelAnimationFrame(particleAnimationId);
+                particleAnimationId = null;
+            }
+        } else {
+            if (!particleAnimationId && !isLowEnd && !isMobile) {
+                particleAnimationId = requestAnimationFrame(animateParticles);
+            }
+        }
     });
-});
+}
+
+// ============================================
+// SCROLL PROGRESS - THROTTLED
+// ============================================
+let scrollTicking = false;
+
+window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+        requestAnimationFrame(() => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            if (scrollProgress) {
+                scrollProgress.style.width = progress + '%';
+            }
+            scrollTicking = false;
+        });
+        scrollTicking = true;
+    }
+}, { passive: true });
+
+// ============================================
+// 3D TILT EFFECT - DISABLED ON MOBILE
+// ============================================
+if (!isMobile && !isTouchDevice) {
+    document.querySelectorAll('[data-tilt]').forEach(element => {
+        element.addEventListener('mousemove', (e) => {
+            const rect = element.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / 25;
+            const rotateY = (centerX - x) / 25;
+            
+            element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
+        });
+        
+        element.addEventListener('mouseleave', () => {
+            element.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+        });
+    });
+}
 
 // ============================================
 // SCROLL REVEAL
@@ -287,12 +368,12 @@ function triggerReveal() {
 }
 
 // ============================================
-// COUNTER ANIMATION
+// COUNTER ANIMATION - OPTIMIZED
 // ============================================
 function startCounters() {
     document.querySelectorAll('.stat-number').forEach(counter => {
         const target = parseInt(counter.getAttribute('data-count'));
-        const duration = 2000;
+        const duration = isMobile ? 1200 : 2000;
         const step = target / (duration / 16);
         let current = 0;
         
@@ -306,7 +387,7 @@ function startCounters() {
             }
         };
         
-        setTimeout(updateCounter, 800);
+        setTimeout(updateCounter, isMobile ? 400 : 800);
     });
 }
 
@@ -369,22 +450,15 @@ function goToStep(step) {
         
         if (stepNum === step) {
             el.classList.add('active');
-            // Animate progress ring
             const ring = el.querySelector('.progress-ring');
-            if (ring) {
-                ring.style.strokeDashoffset = '0';
-            }
+            if (ring) ring.style.strokeDashoffset = '0';
         } else if (stepNum < step) {
             el.classList.add('completed');
             const ring = el.querySelector('.progress-ring');
-            if (ring) {
-                ring.style.strokeDashoffset = '0';
-            }
+            if (ring) ring.style.strokeDashoffset = '0';
         } else {
             const ring = el.querySelector('.progress-ring');
-            if (ring) {
-                ring.style.strokeDashoffset = '100';
-            }
+            if (ring) ring.style.strokeDashoffset = '100';
         }
     });
     
@@ -635,7 +709,6 @@ form.addEventListener('submit', async function(e) {
             body: JSON.stringify(formData)
         });
         
-        // Trigger confetti
         startConfetti();
         
         setTimeout(() => {
@@ -677,18 +750,21 @@ function resetForm() {
 }
 
 // ============================================
-// CONFETTI EFFECT
+// CONFETTI - OPTIMIZED FOR MOBILE
 // ============================================
 const confettiCanvas = document.getElementById('confettiCanvas');
-const confettiCtx = confettiCanvas.getContext('2d');
+const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
 
 function resizeConfetti() {
+    if (!confettiCanvas) return;
     confettiCanvas.width = window.innerWidth;
     confettiCanvas.height = window.innerHeight;
 }
 
-resizeConfetti();
-window.addEventListener('resize', resizeConfetti);
+if (confettiCanvas) {
+    resizeConfetti();
+    window.addEventListener('resize', resizeConfetti);
+}
 
 let confettiPieces = [];
 
@@ -696,11 +772,11 @@ class ConfettiPiece {
     constructor() {
         this.x = Math.random() * confettiCanvas.width;
         this.y = -20;
-        this.size = Math.random() * 10 + 5;
+        this.size = Math.random() * 8 + 4;
         this.speedY = Math.random() * 3 + 2;
-        this.speedX = (Math.random() - 0.5) * 4;
+        this.speedX = (Math.random() - 0.5) * 3;
         this.rotation = Math.random() * 360;
-        this.rotationSpeed = (Math.random() - 0.5) * 10;
+        this.rotationSpeed = (Math.random() - 0.5) * 8;
         this.color = ['#ca8a04', '#dc2626', '#fde047', '#b91c1c', '#eab308'][Math.floor(Math.random() * 5)];
         this.shape = Math.random() > 0.5 ? 'circle' : 'square';
     }
@@ -709,7 +785,7 @@ class ConfettiPiece {
         this.y += this.speedY;
         this.x += this.speedX;
         this.rotation += this.rotationSpeed;
-        this.speedY += 0.1; // gravity
+        this.speedY += 0.1;
     }
     
     draw() {
@@ -732,13 +808,24 @@ class ConfettiPiece {
 }
 
 function startConfetti() {
+    if (!confettiCtx) return;
+    
     confettiPieces = [];
-    for (let i = 0; i < 150; i++) {
+    let count;
+    if (isLowEnd) {
+        count = 30;
+    } else if (isMobile) {
+        count = 60;
+    } else {
+        count = 150;
+    }
+    
+    for (let i = 0; i < count; i++) {
         confettiPieces.push(new ConfettiPiece());
     }
     
     let frames = 0;
-    const maxFrames = 200;
+    const maxFrames = isMobile ? 120 : 200;
     
     function animateConfetti() {
         confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
@@ -823,12 +910,84 @@ document.querySelectorAll('input, textarea, select').forEach(input => {
     });
 });
 
-// NISN Filter
 document.getElementById('nisn').addEventListener('input', function(e) {
     this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
+});
+
+// ============================================
+// MOBILE PERFORMANCE MONITOR
+// ============================================
+if (isMobile) {
+    let frameCount = 0;
+    let lastCheck = performance.now();
+    
+    function checkFPS() {
+        frameCount++;
+        const now = performance.now();
+        
+        if (now - lastCheck >= 1000) {
+            const fps = frameCount;
+            frameCount = 0;
+            lastCheck = now;
+            
+            if (fps < 30 && canvas) {
+                canvas.style.display = 'none';
+                if (particleAnimationId) {
+                    cancelAnimationFrame(particleAnimationId);
+                    particleAnimationId = null;
+                }
+                console.log('⚠️ Low FPS detected, particles disabled');
+            }
+        }
+        
+        requestAnimationFrame(checkFPS);
+    }
+    
+    setTimeout(() => requestAnimationFrame(checkFPS), 3000);
+}
+
+// ============================================
+// PREVENT DOUBLE-TAP ZOOM ON iOS
+// ============================================
+if (isTouchDevice) {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
+// ============================================
+// FIX iOS SCROLL LAG
+// ============================================
+if (isMobile) {
+    document.querySelectorAll('.form-card, .info-panel').forEach(el => {
+        el.style.webkitOverflowScrolling = 'touch';
+    });
+}
+
+// ============================================
+// HANDLE ORIENTATION CHANGE
+// ============================================
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        resizeCanvas();
+        resizeConfetti();
+        window.scrollTo({ top: window.scrollY, behavior: 'auto' });
+    }, 300);
 });
 
 // ============================================
 // INITIALIZE
 // ============================================
 updateClock();
+
+console.log('✅ Mobile optimization loaded:', {
+    mode: isLowEnd ? 'LOW-END' : (isMobile ? 'MOBILE' : 'DESKTOP'),
+    particles: isMobile ? 'disabled' : 'enabled',
+    cursor: isMobile ? 'disabled' : 'enabled',
+    confetti: isLowEnd ? 30 : (isMobile ? 60 : 150)
+});
