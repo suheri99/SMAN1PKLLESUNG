@@ -2131,3 +2131,621 @@ if (isMobile) {
     
     console.log('✅ Upload ring auto-hide active');
 })();
+
+// ============================================
+// FIX: TOMBOL KIRIM DATA TIDAK BERFUNGSI DI HP
+// Deteksi & perbaiki semua kemungkinan penyebab
+// ============================================
+
+(function fixSubmitButton() {
+    console.log('🔧 Fixing submit button functionality...');
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const dataForm = document.getElementById('dataForm');
+    
+    if (!submitBtn || !dataForm) {
+        console.error('❌ Submit button or form not found!');
+        return;
+    }
+    
+    // ============================================
+    // FIX 1: HAPUS SEMUA EVENT LISTENER LAMA
+    // ============================================
+    // Clone button untuk hapus semua listener
+    const freshSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(freshSubmitBtn, submitBtn);
+    
+    // Update reference
+    const newSubmitBtn = document.getElementById('submitBtn');
+    
+    console.log('✅ Submit button event listeners cleared');
+    
+    // ============================================
+    // FIX 2: PASTIKAN TOMBOL BISA DI-KLIK
+    // ============================================
+    newSubmitBtn.style.pointerEvents = 'auto';
+    newSubmitBtn.style.touchAction = 'manipulation';
+    newSubmitBtn.style.cursor = 'pointer';
+    newSubmitBtn.style.webkitTapHighlightColor = 'transparent';
+    
+    // Pastikan z-index tinggi
+    newSubmitBtn.style.position = 'relative';
+    newSubmitBtn.style.zIndex = '10';
+    
+    // ============================================
+    // FIX 3: DETEKSI TOMBOL YANG TERTUTUP
+    // ============================================
+    function isButtonCovered() {
+        const rect = newSubmitBtn.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Cek element yang ada di atas tombol
+        const elementAtPoint = document.elementFromPoint(centerX, centerY);
+        
+        if (elementAtPoint === newSubmitBtn || newSubmitBtn.contains(elementAtPoint)) {
+            return false; // Tidak tertutup
+        }
+        
+        // Log element yang menutupi
+        if (elementAtPoint) {
+            console.warn('⚠️ Button covered by:', elementAtPoint.className, elementAtPoint.tagName);
+            return elementAtPoint;
+        }
+        
+        return false;
+    }
+    
+    // Cek setiap 2 detik saat di step 3
+    setInterval(() => {
+        if (currentStep === 3 && newSubmitBtn.style.display !== 'none') {
+            const cover = isButtonCovered();
+            if (cover && cover !== false) {
+                console.warn('🚨 Submit button covered! Fixing...');
+                cover.style.pointerEvents = 'none';
+            }
+        }
+    }, 2000);
+    
+    // ============================================
+    // FIX 4: EVENT LISTENER BARU UNTUK SUBMIT
+    // ============================================
+    async function handleSubmit(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('🎯 Submit button clicked!');
+        
+        // Haptic feedback
+        if (isMobile && typeof haptic === 'function') {
+            haptic([15, 30, 15, 30]);
+        }
+        
+        // ============================================
+        // VALIDASI SEBELUM SUBMIT
+        // ============================================
+        
+        // 1. Cek apakah foto sudah diupload
+        const fileInput = document.getElementById('foto');
+        const previewContent = document.getElementById('previewContent');
+        
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            console.warn('❌ No file uploaded');
+            if (typeof showToast === 'function') {
+                showToast('Upload foto terlebih dahulu!', 'error');
+            } else {
+                alert('Upload foto terlebih dahulu!');
+            }
+            if (typeof shakeElement === 'function') {
+                shakeElement(document.getElementById('uploadArea'));
+            }
+            return;
+        }
+        
+        // 2. Cek terms checkbox
+        const termsCheckbox = document.getElementById('terms');
+        if (!termsCheckbox || !termsCheckbox.checked) {
+            console.warn('❌ Terms not checked');
+            if (typeof showToast === 'function') {
+                showToast('Centang pernyataan terlebih dahulu!', 'error');
+            } else {
+                alert('Centang pernyataan terlebih dahulu!');
+            }
+            if (typeof shakeElement === 'function') {
+                shakeElement(document.querySelector('.checkbox-wrapper'));
+            }
+            return;
+        }
+        
+        // 3. Cek semua field wajib
+        const requiredFields = [
+            { id: 'nama', label: 'Nama Lengkap', min: 3 },
+            { id: 'kelas', label: 'Kelas', isSelect: true },
+            { id: 'nisn', label: 'NISN', min: 3 },
+            { id: 'tempatLahir', label: 'Tempat Lahir', min: 2 },
+            { id: 'tanggalLahir', label: 'Tanggal Lahir', isDate: true },
+            { id: 'alamat', label: 'Alamat', min: 1 },
+            { id: 'agama', label: 'Agama', isSelect: true }
+        ];
+        
+        for (const field of requiredFields) {
+            const el = document.getElementById(field.id);
+            if (!el) continue;
+            
+            const value = el.value.trim();
+            let isValid = false;
+            
+            if (field.isSelect) {
+                isValid = value !== '';
+            } else if (field.isDate) {
+                isValid = value !== '';
+            } else {
+                isValid = value.length >= (field.min || 1);
+            }
+            
+            if (!isValid) {
+                console.warn(`❌ Field ${field.id} invalid`);
+                if (typeof showToast === 'function') {
+                    showToast(`${field.label} wajib diisi dengan benar!`, 'error');
+                } else {
+                    alert(`${field.label} wajib diisi dengan benar!`);
+                }
+                if (typeof shakeElement === 'function') {
+                    shakeElement(el);
+                }
+                return;
+            }
+        }
+        
+        // ============================================
+        // SUBMIT DATA
+        // ============================================
+        console.log('✅ All validations passed, submitting...');
+        
+        // Set loading state
+        newSubmitBtn.classList.add('loading');
+        newSubmitBtn.disabled = true;
+        newSubmitBtn.style.pointerEvents = 'none';
+        
+        try {
+            // Cek SCRIPT_URL
+            if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
+                throw new Error('SCRIPT_URL belum dikonfigurasi!');
+            }
+            
+            // Convert image to base64
+            const file = fileInput.files[0];
+            const base64Image = await convertToBase64Safe(file);
+            
+            // Prepare data
+            const formData = {
+                nama: document.getElementById('nama').value.trim(),
+                kelas: document.getElementById('kelas').value,
+                nisn: document.getElementById('nisn').value.trim(),
+                tempatLahir: document.getElementById('tempatLahir').value.trim(),
+                tanggalLahir: document.getElementById('tanggalLahir').value,
+                alamat: document.getElementById('alamat').value.trim(),
+                agama: document.getElementById('agama').value,
+                fotoBase64: base64Image,
+                fotoName: file.name,
+                fotoType: file.type,
+                timestamp: new Date().toLocaleString('id-ID')
+            };
+            
+            console.log('📤 Sending data to:', SCRIPT_URL.substring(0, 50) + '...');
+            
+            // Kirim ke Google Apps Script
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            console.log('✅ Data sent successfully!');
+            
+            // Trigger confetti
+            if (typeof startConfetti === 'function') {
+                startConfetti();
+            }
+            
+            // Show success after short delay
+            setTimeout(() => {
+                if (typeof showModal === 'function') {
+                    showModal();
+                }
+                if (typeof showToast === 'function') {
+                    showToast('Data berhasil dikirim! 🎉', 'success');
+                }
+                
+                // Reset form
+                if (typeof resetForm === 'function') {
+                    resetForm();
+                } else {
+                    dataForm.reset();
+                }
+                
+                // Clear localStorage draft
+                try { localStorage.removeItem('formDraft'); } catch (e) {}
+            }, 500);
+            
+        } catch (error) {
+            console.error('❌ Submit error:', error);
+            
+            if (typeof showToast === 'function') {
+                showToast('Gagal mengirim: ' + error.message, 'error');
+            } else {
+                alert('Gagal mengirim data. Silakan coba lagi.');
+            }
+        } finally {
+            // Reset loading state
+            newSubmitBtn.classList.remove('loading');
+            newSubmitBtn.disabled = false;
+            newSubmitBtn.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Attach event listeners
+    newSubmitBtn.addEventListener('click', handleSubmit);
+    newSubmitBtn.addEventListener('touchend', function(e) {
+        // Prevent double-trigger
+        e.preventDefault();
+        handleSubmit(e);
+    }, { passive: false });
+    
+    // ============================================
+    // FIX 5: FORM SUBMIT HANDLER
+    // ============================================
+    // Remove old submit listener
+    const freshForm = dataForm.cloneNode(true);
+    // Re-attach semua element references
+    dataForm.parentNode.replaceChild(freshForm, dataForm);
+    
+    // Re-attach submit handler ke form baru
+    const newForm = document.getElementById('dataForm');
+    
+    newForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Trigger button click
+        const btn = document.getElementById('submitBtn');
+        if (btn) {
+            handleSubmit(new Event('click'));
+        }
+    });
+    
+    console.log('✅ Submit handler attached');
+    
+    // ============================================
+    // FIX 6: ENSURE VALIDATION FEEDBACK
+    // ============================================
+    function showValidationError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+        
+        // Add error class
+        const formGroup = field.closest('.form-group');
+        if (formGroup) {
+            formGroup.classList.add('error');
+            setTimeout(() => formGroup.classList.remove('error'), 500);
+        }
+        
+        // Show toast
+        if (typeof showToast === 'function') {
+            showToast(message, 'error');
+        }
+        
+        // Vibrate
+        if (isMobile && typeof haptic === 'function') {
+            haptic([50, 30, 50]);
+        }
+        
+        // Scroll into view
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Focus
+        setTimeout(() => field.focus(), 300);
+    }
+    
+    // ============================================
+    // FIX 7: DEBUG MODE
+    // ============================================
+    // Tambah flag untuk debug
+    window.debugSubmit = function() {
+        console.log('🔍 Debug Info:');
+        console.log('- Current Step:', currentStep);
+        console.log('- Total Steps:', totalSteps);
+        console.log('- Button Display:', newSubmitBtn.style.display);
+        console.log('- Button Disabled:', newSubmitBtn.disabled);
+        console.log('- Button PointerEvents:', newSubmitBtn.style.pointerEvents);
+        console.log('- File Input:', fileInput?.files?.length || 0, 'file(s)');
+        console.log('- Terms Checked:', document.getElementById('terms')?.checked);
+        console.log('- SCRIPT_URL:', SCRIPT_URL);
+        
+        // Cek semua field
+        const fields = ['nama', 'kelas', 'nisn', 'tempatLahir', 'tanggalLahir', 'alamat', 'agama'];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            console.log(`- ${id}:`, el ? `"${el.value}"` : 'NOT FOUND');
+        });
+        
+        // Cek apakah button tertutup
+        const cover = isButtonCovered();
+        if (cover) {
+            console.warn('🚨 Button covered by:', cover);
+        } else {
+            console.log('✅ Button is visible and clickable');
+        }
+    };
+    
+    console.log('✅ Fix complete. Type debugSubmit() in console for debug info.');
+})();
+
+// ============================================
+// HELPER: Convert to base64 (safe version)
+// ============================================
+function convertToBase64Safe(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            reject(new Error('File tidak ada'));
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            } catch (e) {
+                reject(e);
+            }
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// ============================================
+// FIX CSS: PASTIKAN TOMBOL BISA DI-KLIK
+// ============================================
+(function fixSubmitButtonCSS() {
+    const style = document.createElement('style');
+    style.id = 'submit-button-fix';
+    style.textContent = `
+        /* === SUBMIT BUTTON FIX === */
+        #submitBtn,
+        .submit-btn {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+            position: relative !important;
+            z-index: 10 !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+        }
+        
+        /* Pastikan tidak ada overlay yang menutupi */
+        #submitBtn::before,
+        #submitBtn::after {
+            pointer-events: none !important;
+        }
+        
+        /* Loading state */
+        #submitBtn.loading {
+            pointer-events: none !important;
+            cursor: wait !important;
+        }
+        
+        /* Pastikan anak-anak button juga bisa di-klik */
+        #submitBtn * {
+            pointer-events: none !important;
+        }
+        
+        /* === MOBILE SPECIFIC === */
+        @media (max-width: 768px) {
+            #submitBtn {
+                min-height: 52px;
+                font-size: 0.95rem;
+                padding: 16px 24px;
+                width: 100%;
+            }
+            
+            /* Pastikan tidak ada yang menutupi */
+            .form-navigation {
+                position: relative;
+                z-index: 5;
+            }
+            
+            /* Step indicator di atas tombol */
+            .step-indicator {
+                z-index: 1;
+            }
+            
+            /* Form group di atas */
+            .form-group {
+                position: relative;
+                z-index: 2;
+            }
+            
+            /* Checkbox di atas */
+            .terms-wrapper,
+            .checkbox-wrapper {
+                position: relative;
+                z-index: 3;
+            }
+            
+            /* Preview foto di atas */
+            .upload-area,
+            .preview-content {
+                position: relative;
+                z-index: 3;
+            }
+            
+            /* Toast di atas */
+            .toast {
+                z-index: 1001;
+            }
+            
+            /* Modal di atas */
+            .modal {
+                z-index: 1000;
+            }
+        }
+        
+        /* === FIX: REMOVE POINTER-EVENTS NONE === */
+        body.scrolling-active #submitBtn,
+        body.scrolling-active .submit-btn,
+        body.scrolling-active .nav-btn {
+            pointer-events: auto !important;
+        }
+        
+        /* === FIX: REMOVE CONTAIN YANG BISA HALANGI CLICK === */
+        .form-navigation,
+        .submit-btn,
+        #submitBtn {
+            contain: none !important;
+        }
+        
+        /* === FIX: STEP 3 BUTTON Z-INDEX === */
+        .form-step[data-step="3"] .form-navigation {
+            position: relative;
+            z-index: 20;
+        }
+        
+        /* === FIX: CHECKBOX === */
+        .checkbox-wrapper {
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+        }
+        
+        .checkbox-wrapper input[type="checkbox"] {
+            cursor: pointer;
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 3;
+        }
+        
+        /* === FIX: UPLOAD AREA === */
+        .upload-area {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* === FIX: PREVIEW CONTENT === */
+        .preview-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* === FIX: REMOVE CSS THAT PREVENTS CLICK === */
+        @media (max-width: 768px) {
+            .submit-btn,
+            .submit-btn * {
+                backface-visibility: visible !important;
+                -webkit-backface-visibility: visible !important;
+                transform-style: flat !important;
+            }
+        }
+    `;
+    
+    // Remove old style if exists
+    const oldStyle = document.getElementById('submit-button-fix');
+    if (oldStyle) oldStyle.remove();
+    
+    document.head.appendChild(style);
+    console.log('✅ Submit button CSS fix applied');
+})();
+
+// ============================================
+// AUTO-DETECT & FIX SUBMIT ISSUES
+// ============================================
+(function autoDetectSubmitIssues() {
+    // Cek setiap 3 detik
+    setInterval(() => {
+        const submitBtn = document.getElementById('submitBtn');
+        if (!submitBtn) return;
+        
+        // Skip jika button tidak visible
+        if (submitBtn.style.display === 'none') return;
+        
+        // Cek 1: Button tertutup?
+        const rect = submitBtn.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) {
+            console.warn('⚠️ Submit button has 0 size');
+            submitBtn.style.minHeight = '52px';
+            submitBtn.style.width = '100%';
+        }
+        
+        // Cek 2: Button di luar viewport?
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            // Normal saat belum scroll
+        }
+        
+        // Cek 3: Element di atas button?
+        if (rect.width > 0 && rect.height > 0) {
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const elementAtPoint = document.elementFromPoint(centerX, centerY);
+            
+            if (elementAtPoint && 
+                elementAtPoint !== submitBtn && 
+                !submitBtn.contains(elementAtPoint)) {
+                console.warn('⚠️ Submit button covered by:', elementAtPoint.className);
+                
+                // Force fix
+                if (elementAtPoint.style) {
+                    elementAtPoint.style.pointerEvents = 'none';
+                }
+                submitBtn.style.zIndex = '9999';
+            }
+        }
+    }, 3000);
+    
+    console.log('✅ Auto-detect submit issues active');
+})();
+
+// ============================================
+// FIX: PASTIKAN VALIDASI TIDAK SILENT
+// ============================================
+(function ensureValidationFeedback() {
+    // Override validateStep untuk tambah feedback
+    const originalValidateStep = window.validateStep;
+    
+    if (typeof validateStep === 'function') {
+        window.validateStep = function(step) {
+            const result = originalValidateStep.call(this, step);
+            
+            if (!result && isMobile) {
+                // Vibrate untuk feedback
+                if (typeof haptic === 'function') {
+                    haptic([30, 50, 30]);
+                }
+                
+                console.log('❌ Validation failed on step', step);
+            }
+            
+            return result;
+        };
+    }
+    
+    console.log('✅ Validation feedback enhanced');
+})();
+
+// ============================================
+// FINAL LOG
+// ============================================
+console.log('');
+console.log('════════════════════════════════════════');
+console.log('🔧 SUBMIT BUTTON FIX LOADED');
+console.log('════════════════════════════════════════');
+console.log('✅ Event listeners refreshed');
+console.log('✅ Pointer events enabled');
+console.log('✅ Z-index optimized');
+console.log('✅ Auto-detect active');
+console.log('✅ Validation feedback enhanced');
+console.log('');
+console.log('💡 Debug: Type "debugSubmit()" in console');
+console.log('════════════════════════════════════════');
