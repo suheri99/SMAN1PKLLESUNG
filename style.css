@@ -2903,3 +2903,69 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         text-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
     }
 }
+
+/* Lingkaran berputar pada icon upload foto */
+
+.upload-ring {
+    display: block !important;
+    position: absolute;
+    inset: -8px;
+    border: 2px dashed rgba(220, 38, 38, 0.5);
+    border-radius: 50%;
+    animation: uploadRingRotate 8s linear infinite !important;
+    transform-origin: center center;
+    will-change: transform;
+    pointer-events: none;
+}
+
+.upload-ring::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 1px dashed rgba(234, 179, 8, 0.4);
+    border-radius: 50%;
+    animation: uploadRingRotateReverse 12s linear infinite !important;
+    transform-origin: center center;
+}
+
+@keyframes uploadRingRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes uploadRingRotateReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+/* Pause saat scroll untuk hemat */
+body.scrolling-active .upload-ring,
+body.scrolling-active .upload-ring::before {
+    animation-play-state: paused !important;
+}
+
+/* Khusus mobile */
+@media (max-width: 768px) {
+    .upload-ring {
+        animation: uploadRingRotate 8s linear infinite !important;
+        inset: -6px;
+        border-color: rgba(220, 38, 38, 0.6);
+    }
+    
+    .upload-ring::before {
+        animation: uploadRingRotateReverse 12s linear infinite !important;
+        inset: -10px;
+        border-color: rgba(234, 179, 8, 0.5);
+    }
+    
+    .upload-icon-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+/* Sembunyikan saat foto sudah diupload */
+.upload-area.preview-active .upload-ring,
+.upload-area.preview-active .upload-ring::before {
+    display: none !important;
+}
