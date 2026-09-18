@@ -2870,3 +2870,36 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .step-line.completed {
     background: linear-gradient(90deg, #22c55e, #16a34a) !important;
 }
+
+/* Icon jam berputar di HP */
+.clock-icon {
+    animation: rotateClockSmooth 2s ease-in-out infinite !important;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+@keyframes rotateClockSmooth {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .clock-icon {
+        animation: rotateClockSmooth 2s ease-in-out infinite !important;
+    }
+}
+
+.clock-time {
+    animation: clockTimePulse 2s ease-in-out infinite !important;
+}
+
+@keyframes clockTimePulse {
+    0%, 100% {
+        color: #b91c1c;
+        text-shadow: 0 0 0 transparent;
+    }
+    50% {
+        color: #dc2626;
+        text-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+    }
+}
