@@ -1,7 +1,7 @@
 // ============================================
 // KONFIGURASI
 // ============================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqhub74-zw0J2OMW5yPL5kFf2u7wFlfOkinXQ2lnesulUJaTe-HGtOKGtLthUpH1FV/exec';
 
 // ============================================
 // DEVICE DETECTION
@@ -70,7 +70,7 @@ document.body.style.overflow = 'hidden';
 const typingTextEl = document.getElementById('typingText');
 
 if (typingTextEl) {
-    const typingWords = ['Siswa', 'SMANSA', 'Pangkalan Kuras', 'Berprestasi', 'Juara'];
+    const typingWords = ['Siswa', 'SMAN1', 'Pangkalan', 'Lesung', 'Hebat'];
     let wordIdx = 0;
     let charIdx = 0;
     let deleting = false;
