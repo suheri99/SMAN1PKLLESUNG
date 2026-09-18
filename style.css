@@ -48,7 +48,7 @@
 }
 
 html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
 }
 
 body {
@@ -60,6 +60,8 @@ body {
     position: relative;
     cursor: default;
     -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
 }
 
 /* ============================================
@@ -367,7 +369,6 @@ body {
     height: 4px;
     background: rgba(220, 38, 38, 0.08);
     z-index: 100;
-    backdrop-filter: blur(10px);
 }
 
 .scroll-progress-bar {
@@ -435,18 +436,32 @@ body {
     width: 16px;
     height: 16px;
     color: var(--red-600);
-    animation: rotateClock 2s ease-in-out infinite;
+    animation: rotateClockSmooth 2s ease-in-out infinite;
+    transform-origin: center center;
+    will-change: transform;
 }
 
-@keyframes rotateClock {
+@keyframes rotateClockSmooth {
     0%, 100% { transform: rotate(0deg); }
     50% { transform: rotate(360deg); }
 }
 
 .clock-label { color: var(--muted); font-weight: 400; }
-.clock-time { color: var(--red-700); font-weight: 700; font-family: 'Courier New', monospace; letter-spacing: 1px; font-size: 0.9rem; }
+.clock-time { 
+    color: var(--red-700); 
+    font-weight: 700; 
+    font-family: 'Courier New', monospace; 
+    letter-spacing: 1px; 
+    font-size: 0.9rem;
+    animation: clockTimePulse 2s ease-in-out infinite;
+}
 .clock-divider { color: var(--gold-500); font-weight: 700; }
 .clock-date { color: var(--slate); font-weight: 500; font-size: 0.78rem; }
+
+@keyframes clockTimePulse {
+    0%, 100% { color: #b91c1c; text-shadow: 0 0 0 transparent; }
+    50% { color: #dc2626; text-shadow: 0 0 8px rgba(220, 38, 38, 0.6); }
+}
 
 /* ============================================
    CONTAINER & LAYOUT
@@ -474,9 +489,6 @@ body {
     flex-direction: column;
     justify-content: space-between;
     min-height: 600px;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-style: preserve-3d;
-    will-change: transform;
 }
 
 .crown-decoration {
@@ -579,7 +591,9 @@ body {
 .title-line { display: block; }
 
 .gold-text {
-    display: block;
+    display: inline-block;
+    min-height: 1.2em;
+    min-width: 4ch;
     background: linear-gradient(90deg, #ca8a04, #dc2626, #fde047, #dc2626, #ca8a04);
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -587,16 +601,21 @@ body {
     background-clip: text;
     animation: shimmer 3s linear infinite;
     position: relative;
-    min-height: 1.1em;
 }
 
 .gold-text::after {
     content: '|';
-    -webkit-text-fill-color: var(--red-500);
-    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: #dc2626;
+    color: #dc2626;
+    margin-left: 2px;
+    font-weight: 300;
+    animation: cursorBlink 0.8s step-end infinite;
 }
 
-@keyframes blink { 50% { opacity: 0; } }
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
 
 @keyframes shimmer {
     0% { background-position: 0% center; }
@@ -661,7 +680,6 @@ body {
     background: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(202, 138, 4, 0.2);
     border-radius: 18px;
-    backdrop-filter: blur(10px);
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
     position: relative;
@@ -701,33 +719,9 @@ body {
     box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
     position: relative;
     z-index: 1;
-    transition: all 0.4s ease;
 }
-
-.feature-item:hover .feature-icon { transform: rotateY(360deg) scale(1.1); }
 
 .feature-icon svg { width: 24px; height: 24px; }
-
-.icon-ring {
-    position: absolute;
-    inset: -6px;
-    border: 1.5px solid rgba(234, 179, 8, 0.4);
-    border-radius: 18px;
-    opacity: 0;
-    transition: all 0.4s ease;
-}
-
-.feature-item:hover .icon-ring {
-    opacity: 1;
-    inset: -4px;
-    border-color: var(--gold-400);
-    animation: ringPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes ringPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.5; }
-}
 
 .feature-text { position: relative; z-index: 1; }
 
@@ -740,22 +734,6 @@ body {
 
 .feature-text p { font-size: 0.82rem; color: var(--muted); }
 
-.feature-glow {
-    position: absolute;
-    right: -20px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle, rgba(253, 224, 71, 0.4), transparent 70%);
-    border-radius: 50%;
-    opacity: 0;
-    transition: all 0.5s ease;
-    pointer-events: none;
-}
-
-.feature-item:hover .feature-glow { opacity: 1; right: -10px; }
-
 .stats-section {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -765,7 +743,6 @@ body {
     border: 1px solid rgba(202, 138, 4, 0.25);
     border-radius: 18px;
     margin-bottom: 32px;
-    backdrop-filter: blur(10px);
 }
 
 .stat-item {
@@ -830,7 +807,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    perspective: 1000px;
 }
 
 .form-card {
@@ -848,9 +824,6 @@ body {
         0 0 0 1px rgba(255, 255, 255, 0.6) inset,
         0 1px 0 rgba(255, 255, 255, 0.9) inset;
     animation: cardEntry 1s cubic-bezier(0.16, 1, 0.3, 1);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-style: preserve-3d;
-    will-change: transform;
 }
 
 @keyframes cardEntry {
@@ -881,15 +854,12 @@ body {
     border-color: var(--red-600);
     border-style: solid;
     border-width: 0;
-    transition: all 0.4s ease;
 }
 
 .corner-tl { top: 16px; left: 16px; border-top-width: 2.5px; border-left-width: 2.5px; border-top-left-radius: 10px; border-color: var(--gold-600); }
 .corner-tr { top: 16px; right: 16px; border-top-width: 2.5px; border-right-width: 2.5px; border-top-right-radius: 10px; }
 .corner-bl { bottom: 16px; left: 16px; border-bottom-width: 2.5px; border-left-width: 2.5px; border-bottom-left-radius: 10px; }
 .corner-br { bottom: 16px; right: 16px; border-bottom-width: 2.5px; border-right-width: 2.5px; border-bottom-right-radius: 10px; border-color: var(--gold-600); }
-
-.form-card:hover .corner { width: 36px; height: 36px; }
 
 .floating-badge {
     position: absolute;
@@ -983,10 +953,7 @@ body {
     position: relative;
     z-index: 2;
     filter: drop-shadow(0 4px 8px rgba(220, 38, 38, 0.3));
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.school-logo-box:hover .school-logo-img { transform: scale(1.08) rotate(-2deg); }
 
 .logo-fallback {
     width: 60px;
@@ -1053,12 +1020,6 @@ body {
     transform: rotate(45deg);
     box-shadow: 0 0 15px rgba(220, 38, 38, 0.8), 0 0 30px rgba(234, 179, 8, 0.5);
     flex-shrink: 0;
-    animation: diamondGlow 2s ease-in-out infinite;
-}
-
-@keyframes diamondGlow {
-    0%, 100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.8), 0 0 30px rgba(234, 179, 8, 0.5); }
-    50% { box-shadow: 0 0 25px rgba(220, 38, 38, 1), 0 0 50px rgba(234, 179, 8, 0.8); }
 }
 
 .form-subtitle-main {
@@ -1077,6 +1038,9 @@ body {
     font-style: italic;
 }
 
+/* ============================================
+   STEP INDICATOR
+============================================ */
 .step-indicator {
     display: flex;
     align-items: center;
@@ -1095,6 +1059,7 @@ body {
     align-items: center;
     gap: 6px;
     transition: all 0.4s ease;
+    cursor: pointer;
 }
 
 .step-circle {
@@ -1140,9 +1105,10 @@ body {
 .step.active .step-label { color: var(--red-700); font-weight: 700; }
 
 .step.completed .step-circle {
-    background: var(--red-600);
-    border-color: var(--red-700);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: #15803d;
     color: var(--white);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
 }
 
 .step.completed .step-num { display: none; }
@@ -1174,32 +1140,40 @@ body {
 }
 
 .step-line.active {
-    background: var(--royal-gradient);
-    background-size: 200% auto;
-    box-shadow: 0 0 15px rgba(220, 38, 38, 0.6);
-    animation: shimmer 2s linear infinite;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
 }
 
+/* ============================================
+   FORM STEPS
+============================================ */
 .form-step {
     display: none;
-    animation: stepEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
 }
 
-.form-step.active { display: block; }
-
-@keyframes stepEntry {
-    from { opacity: 0; transform: translateX(30px) scale(0.98); }
-    to { opacity: 1; transform: translateX(0) scale(1); }
+.form-step.active {
+    display: block;
+    opacity: 1;
+    animation: none !important;
+    transform: none !important;
 }
 
+.form-step.active .form-group {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Neutralize old animations */
+@keyframes stepEntry { from { opacity: 1; } to { opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 1; } to { opacity: 1; } }
+
+/* ============================================
+   FORM GROUP
+============================================ */
 .form-group {
     margin-bottom: 22px;
-    animation: fadeInUp 0.5s ease backwards;
-}
-
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .form-group label {
@@ -1211,6 +1185,7 @@ body {
     color: var(--charcoal);
     margin-bottom: 10px;
     letter-spacing: 0.3px;
+    transition: color 0.25s ease;
 }
 
 .label-number {
@@ -1227,6 +1202,7 @@ body {
     border: 1px solid var(--gold-400);
     font-family: 'Cinzel', serif;
     box-shadow: 0 4px 10px rgba(202, 138, 4, 0.2);
+    transition: all 0.25s ease;
 }
 
 .required { color: #ef4444; font-weight: 700; }
@@ -1247,7 +1223,12 @@ body {
     gap: 12px;
 }
 
-.input-wrapper { position: relative; }
+/* ============================================
+   INPUT WRAPPER
+============================================ */
+.input-wrapper {
+    position: relative;
+}
 
 .input-icon {
     position: absolute;
@@ -1272,7 +1253,10 @@ body {
     color: var(--charcoal);
     font-family: 'Poppins', sans-serif;
     font-size: 0.92rem;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: 
+        border-color 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
     outline: none;
     position: relative;
     z-index: 1;
@@ -1306,18 +1290,46 @@ body {
     border-color: var(--red-600);
     background: var(--ivory);
     box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15), 0 10px 30px -10px rgba(202, 138, 4, 0.4);
-    transform: translateY(-2px);
-}
-
-.input-wrapper input:focus ~ .input-icon,
-.input-wrapper textarea:focus ~ .input-icon {
-    color: var(--red-700);
-    transform: scale(1.15) rotate(-5deg);
 }
 
 .input-wrapper input::placeholder,
 .input-wrapper textarea::placeholder {
     color: #b8b8b8;
+}
+
+/* === INPUT VALID HIJAU === */
+.input-wrapper input.input-valid,
+.input-wrapper textarea.input-valid,
+.input-wrapper select.input-valid {
+    border-color: #22c55e !important;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
+    box-shadow: 
+        0 0 0 3px rgba(34, 197, 94, 0.12),
+        0 4px 12px -4px rgba(34, 197, 94, 0.2) !important;
+}
+
+.input-wrapper input.input-valid ~ .input-icon,
+.input-wrapper textarea.input-valid ~ .input-icon,
+.input-wrapper select.input-valid ~ .input-icon {
+    color: #22c55e !important;
+}
+
+.form-group:has(.input-valid) label,
+.form-group.has-valid label {
+    color: #15803d !important;
+}
+
+.form-group:has(.input-valid) .label-number,
+.form-group.has-valid .label-number {
+    background: linear-gradient(135deg, #86efac, #22c55e) !important;
+    color: #ffffff !important;
+    border-color: #16a34a !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(30%) sepia(90%) saturate(3000%) hue-rotate(350deg);
+    cursor: pointer;
 }
 
 .input-border {
@@ -1334,12 +1346,6 @@ body {
 .input-wrapper input:focus ~ .input-border,
 .input-wrapper textarea:focus ~ .input-border {
     opacity: 1;
-    animation: borderGlow 2s ease-in-out infinite;
-}
-
-@keyframes borderGlow {
-    0%, 100% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.4), inset 0 0 20px rgba(234, 179, 8, 0.1); }
-    50% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.5), inset 0 0 30px rgba(220, 38, 38, 0.15); }
 }
 
 .input-glow {
@@ -1359,11 +1365,9 @@ body {
     opacity: 1;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(30%) sepia(90%) saturate(3000%) hue-rotate(350deg);
-    cursor: pointer;
-}
-
+/* ============================================
+   UPLOAD AREA
+============================================ */
 .upload-area {
     position: relative;
     border: 2px dashed rgba(202, 138, 4, 0.4);
@@ -1376,29 +1380,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     overflow: hidden;
 }
 
-.upload-area::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, transparent, rgba(253, 224, 71, 0.2), rgba(220, 38, 38, 0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
-}
-
 .upload-area:hover,
 .upload-area.dragover {
     border-color: var(--red-600);
     background: linear-gradient(135deg, rgba(253, 224, 71, 0.15), rgba(220, 38, 38, 0.08), rgba(255, 255, 255, 0.7));
-    transform: translateY(-3px) scale(1.01);
     box-shadow: 0 25px 50px -15px rgba(220, 38, 38, 0.45);
-}
-
-.upload-area:hover::before { opacity: 1; }
-
-.upload-area.dragover {
-    transform: scale(1.03);
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25), 0 30px 60px -15px rgba(202, 138, 4, 0.5);
 }
 
 .upload-content {
@@ -1443,16 +1429,35 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .upload-ring {
+    display: block;
     position: absolute;
     inset: -8px;
-    border: 2px dashed rgba(220, 38, 38, 0.3);
+    border: 2px dashed rgba(220, 38, 38, 0.5);
     border-radius: 50%;
-    animation: ringRotate 8s linear infinite;
+    animation: uploadRingRotate 8s linear infinite;
+    transform-origin: center center;
+    will-change: transform;
+    pointer-events: none;
 }
 
-@keyframes ringRotate {
+.upload-ring::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 1px dashed rgba(234, 179, 8, 0.4);
+    border-radius: 50%;
+    animation: uploadRingRotateReverse 12s linear infinite;
+    transform-origin: center center;
+}
+
+@keyframes uploadRingRotate {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+@keyframes uploadRingRotateReverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
 }
 
 @keyframes pulseRing {
@@ -1484,14 +1489,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .preview-content.active {
     display: block;
-    animation: previewIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .upload-content.hidden { display: none; }
 
-@keyframes previewIn {
-    from { opacity: 0; transform: scale(0.9) rotate(-2deg); }
-    to { opacity: 1; transform: scale(1) rotate(0deg); }
+.upload-area.preview-active .upload-ring,
+.upload-area.preview-active .upload-ring::before {
+    display: none !important;
 }
 
 .preview-image-wrapper {
@@ -1532,7 +1536,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     align-items: center;
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5), 0 0 20px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
     z-index: 10;
 }
 
@@ -1575,6 +1579,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border: 1px solid var(--gold-400);
 }
 
+/* ============================================
+   TERMS CHECKBOX
+============================================ */
 .terms-wrapper { margin: 20px 0; }
 
 .checkbox-wrapper {
@@ -1587,12 +1594,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border: 1px solid rgba(202, 138, 4, 0.25);
     border-radius: 14px;
     transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
 }
 
 .checkbox-wrapper:hover {
     background: linear-gradient(135deg, rgba(253, 224, 71, 0.18), rgba(220, 38, 38, 0.1));
     border-color: var(--gold-500);
-    transform: translateY(-1px);
 }
 
 .checkbox-wrapper input[type="checkbox"] {
@@ -1625,10 +1633,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .checkbox-wrapper input:checked ~ .checkmark {
-    background: var(--royal-gradient);
-    background-size: 200% auto;
-    border-color: var(--red-700);
-    box-shadow: 0 5px 15px rgba(220, 38, 38, 0.5), 0 0 20px rgba(234, 179, 8, 0.4);
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: #15803d;
+    box-shadow: 0 5px 15px rgba(34, 197, 94, 0.5);
 }
 
 .checkbox-wrapper input:checked ~ .checkmark svg {
@@ -1639,10 +1646,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .terms-text { font-size: 0.82rem; line-height: 1.6; color: var(--slate); }
 .terms-text strong { color: var(--red-800); font-weight: 700; }
 
+/* ============================================
+   NAVIGATION & SUBMIT BUTTONS
+============================================ */
 .form-navigation {
     display: flex;
     gap: 12px;
     margin-top: 28px;
+    position: relative;
+    z-index: 50;
 }
 
 .nav-btn,
@@ -1663,6 +1675,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     position: relative;
     overflow: hidden;
     letter-spacing: 0.5px;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 100;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.nav-btn *,
+.submit-btn * {
+    pointer-events: none;
 }
 
 .nav-btn {
@@ -1693,12 +1716,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .next-btn:hover,
 .submit-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 22px 50px -10px rgba(220, 38, 38, 0.7), 0 0 40px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    box-shadow: 0 22px 50px -10px rgba(220, 38, 38, 0.7), 0 0 40px rgba(234, 179, 8, 0.4);
 }
 
 .next-btn:hover svg { transform: translateX(5px); }
 
-.submit-btn:active { transform: translateY(0); }
+.submit-btn.loading {
+    pointer-events: none !important;
+    cursor: wait !important;
+}
 
 .submit-btn:disabled {
     opacity: 0.7;
@@ -1748,19 +1774,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent 70%);
-    transform: scale(0);
-    animation: rippleAnim 0.6s ease-out;
-    pointer-events: none;
-}
-
-@keyframes rippleAnim {
-    to { transform: scale(4); opacity: 0; }
-}
-
+/* ============================================
+   MODAL
+============================================ */
 .modal {
     position: fixed;
     inset: 0;
@@ -1779,12 +1795,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background: rgba(26, 15, 15, 0.7);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 .modal-content {
@@ -1919,17 +1929,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     font-size: 0.92rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 15px 35px -10px rgba(220, 38, 38, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: 0 15px 35px -10px rgba(220, 38, 38, 0.6);
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    letter-spacing: 0.5px;
     animation: shimmer 3s linear infinite;
 }
 
 .modal-btn:hover {
     transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 22px 50px -10px rgba(220, 38, 38, 0.7), 0 0 40px rgba(234, 179, 8, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    box-shadow: 0 22px 50px -10px rgba(220, 38, 38, 0.7);
 }
 
 .confetti-canvas {
@@ -1939,6 +1948,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 999;
 }
 
+/* ============================================
+   TOAST
+============================================ */
 .toast {
     position: fixed;
     bottom: 30px;
@@ -1954,7 +1966,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     opacity: 0;
     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 1001;
-    box-shadow: 0 25px 50px -10px rgba(220, 38, 38, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.6) inset, 0 0 40px rgba(234, 179, 8, 0.3);
+    box-shadow: 0 25px 50px -10px rgba(220, 38, 38, 0.4);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1970,7 +1982,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 22px;
     color: var(--red-600);
     flex-shrink: 0;
-    animation: rotateClock 2s ease-in-out infinite;
 }
 
 .toast.error { border-color: rgba(239, 68, 68, 0.5); }
@@ -1978,57 +1989,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .toast.success { border-color: rgba(34, 197, 94, 0.5); }
 .toast.success .toast-icon { color: #22c55e; }
 
-.reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal.active {
-    opacity: 1;
-    transform: translateY(0);
-}
-
 /* ============================================
-   MOBILE OPTIMIZATION
+   RESPONSIVE
 ============================================ */
-@media (max-width: 1024px) {
-    .cursor-glow,
-    .cursor-sparkle { display: none !important; }
-    
-    .form-card {
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
+@media (max-width: 1100px) {
+    .container {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 30px 20px;
     }
-    
-    .info-panel { backdrop-filter: none; }
-    
-    .glow-orb {
-        filter: blur(60px);
-        opacity: 0.25;
-    }
-    
-    .animated-border { display: none; }
-    
-    .modal-backdrop {
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
+    .info-panel { min-height: auto; padding: 20px; }
+    .info-title { font-size: 2.5rem; }
+    .feature-list { display: grid; grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {
-    /* === DISABLE HEAVY EFFECTS === */
+    /* Hide heavy effects */
     .cursor-glow,
     .cursor-sparkle,
     .floating-icons,
     .animated-border,
     .crown-glow,
-    .icon-ring,
     .feature-glow,
-    .upload-ring,
-    .input-glow { display: none !important; }
+    .input-glow,
+    .input-border {
+        display: none !important;
+    }
     
-    /* === KEEP PARTICLES ON MOBILE (aktif kembali) === */
+    /* Keep particles & diamond */
     .particle-canvas {
         display: block !important;
         opacity: 0.5 !important;
@@ -2040,15 +2028,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     }
     
     .diamond-particle:nth-child(n+4) { display: none !important; }
+    .gold-particle:nth-child(n+4) { display: none !important; }
     
-    .gold-particle:nth-child(n+4) { display: none; }
+    .glow-orb { filter: blur(40px); opacity: 0.15; }
     
-    .glow-orb {
-        filter: blur(40px);
-        opacity: 0.15;
-    }
-    
-    /* === LAYOUT MOBILE === */
+    /* Layout */
     .container {
         grid-template-columns: 1fr;
         gap: 24px;
@@ -2062,28 +2046,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         display: block;
     }
     
-    .crown-decoration {
-        width: 50px;
-        height: 50px;
-        margin-bottom: 16px;
-    }
-    
-    .badge {
-        padding: 7px 14px;
-        font-size: 0.65rem;
-        letter-spacing: 1.5px;
-    }
-    
-    .info-title {
-        font-size: 2rem;
-        margin-bottom: 16px;
-        letter-spacing: -0.5px;
-    }
-    
-    .info-subtitle {
-        font-size: 1rem;
-        margin-bottom: 24px;
-    }
+    .crown-decoration { width: 50px; height: 50px; margin-bottom: 16px; }
+    .badge { padding: 7px 14px; font-size: 0.65rem; letter-spacing: 1.5px; }
+    .info-title { font-size: 2rem; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .info-subtitle { font-size: 1rem; margin-bottom: 24px; }
     
     .feature-list {
         display: grid;
@@ -2092,28 +2058,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         margin-bottom: 20px;
     }
     
-    .feature-item {
-        padding: 12px 14px;
-        border-radius: 14px;
-        transform: none !important;
-    }
-    
-    .feature-icon {
-        width: 40px;
-        height: 40px;
-    }
-    
+    .feature-item { padding: 12px 14px; border-radius: 14px; }
+    .feature-icon { width: 40px; height: 40px; }
     .feature-icon svg { width: 20px; height: 20px; }
-    
     .feature-text h4 { font-size: 0.9rem; }
     .feature-text p { font-size: 0.75rem; }
     
-    .stats-section {
-        padding: 14px 10px;
-        gap: 8px;
-        margin-bottom: 20px;
-    }
-    
+    .stats-section { padding: 14px 10px; gap: 8px; margin-bottom: 20px; }
     .stat-number { font-size: 1.4rem; }
     .stat-label { font-size: 0.6rem; letter-spacing: 0.5px; }
     
@@ -2133,21 +2084,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         border-radius: 12px;
     }
     
-    .live-clock-content {
-        justify-content: center;
-        font-size: 0.72rem;
-    }
-    
+    .live-clock-content { justify-content: center; font-size: 0.72rem; }
     .clock-icon { width: 14px; height: 14px; }
-    .clock-date,
-    .clock-divider { display: none; }
+    .clock-date, .clock-divider { display: none; }
     
-    /* === FORM CARD MOBILE === */
+    /* Form Card */
     .form-card {
         padding: 24px 18px;
         border-radius: 22px;
-        transform: none !important;
-        will-change: auto;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
     }
     
     .corner { display: none; }
@@ -2171,48 +2117,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         border-radius: 14px;
     }
     
-    .school-name {
-        font-size: 1.2rem;
-        letter-spacing: 0.5px;
-        margin-bottom: 6px;
-    }
-    
-    .school-divider {
-        margin: 8px auto 10px;
-        max-width: 180px;
-    }
-    
+    .school-name { font-size: 1.2rem; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .school-divider { margin: 8px auto 10px; max-width: 180px; }
     .form-subtitle-main { font-size: 0.9rem; }
     .form-subtitle-small { font-size: 0.72rem; }
     
-    .step-indicator {
-        gap: 6px;
-        margin-bottom: 22px;
-        padding: 14px 12px;
-        border-radius: 14px;
-    }
-    
-    .step-circle {
-        width: 34px;
-        height: 34px;
-        font-size: 0.8rem;
-    }
-    
+    /* Step */
+    .step-indicator { gap: 6px; margin-bottom: 22px; padding: 14px 12px; border-radius: 14px; }
+    .step-circle { width: 34px; height: 34px; font-size: 0.8rem; }
     .step-label { display: none; }
     .step-line { max-width: 30px; }
     
+    /* Form Group */
     .form-group { margin-bottom: 18px; }
-    
-    .form-group label {
-        font-size: 0.82rem;
-        margin-bottom: 8px;
-    }
-    
-    .label-number {
-        width: 22px;
-        height: 22px;
-        font-size: 0.65rem;
-    }
+    .form-group label { font-size: 0.82rem; margin-bottom: 8px; }
+    .label-number { width: 22px; height: 22px; font-size: 0.65rem; }
     
     .input-wrapper input,
     .input-wrapper textarea,
@@ -2222,39 +2141,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         font-size: 16px !important;
     }
     
-    .input-wrapper textarea {
-        min-height: 75px;
-        padding-top: 13px;
-    }
-    
-    .input-icon {
-        left: 14px;
-        top: 15px;
-        width: 18px;
-        height: 18px;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-    
+    .input-wrapper textarea { min-height: 75px; padding-top: 13px; }
+    .input-icon { left: 14px; top: 15px; width: 18px; height: 18px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
     .hint { font-size: 0.7rem; }
     
-    .upload-area {
-        padding: 24px 16px;
-        border-radius: 16px;
-    }
-    
-    .upload-icon-wrapper {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 4px;
-    }
-    
+    /* Upload */
+    .upload-area { padding: 24px 16px; border-radius: 16px; }
+    .upload-icon-wrapper { width: 70px; height: 70px; margin-bottom: 4px; }
     .upload-icon { width: 36px; height: 36px; }
     .upload-title { font-size: 0.88rem; }
     .upload-subtitle { font-size: 0.76rem; }
+    
+    .upload-ring {
+        animation: uploadRingRotate 8s linear infinite !important;
+        inset: -6px !important;
+        border-color: rgba(220, 38, 38, 0.6) !important;
+    }
+    
+    .upload-ring::before {
+        animation: uploadRingRotateReverse 12s linear infinite !important;
+        inset: -10px !important;
+        border-color: rgba(234, 179, 8, 0.5) !important;
+    }
     
     .preview-content img { max-height: 220px; }
     .remove-btn { width: 34px; height: 34px; }
@@ -2267,14 +2176,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         align-items: flex-start;
     }
     
-    .checkbox-wrapper {
-        padding: 12px 14px;
-        gap: 10px;
-    }
-    
+    .checkbox-wrapper { padding: 12px 14px; gap: 10px; }
     .checkmark { width: 22px; height: 22px; }
     .terms-text { font-size: 0.78rem; line-height: 1.5; }
     
+    /* Buttons */
     .form-navigation {
         flex-direction: column;
         gap: 10px;
@@ -2286,10 +2192,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         padding: 15px 20px;
         font-size: 0.88rem;
         border-radius: 12px;
+        width: 100%;
+        min-height: 52px;
     }
     
     .btn-shine { display: none; }
     
+    /* Modal */
     .modal-content {
         padding: 44px 24px 28px;
         border-radius: 22px;
@@ -2297,18 +2206,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     }
     
     .modal-crown { width: 36px; height: 36px; top: 16px; }
-    
-    .success-icon {
-        width: 72px;
-        height: 72px;
-        margin: 16px auto 20px;
-    }
-    
+    .success-icon { width: 72px; height: 72px; margin: 16px auto 20px; }
     .modal-content h2 { font-size: 1.5rem; }
     .modal-content p { font-size: 0.95rem; margin-bottom: 24px; }
     .modal-btn { padding: 13px 28px; font-size: 0.85rem; }
     .modal-sparkles span { font-size: 1rem; }
     
+    /* Toast */
     .toast {
         left: 12px;
         right: 12px;
@@ -2323,41 +2227,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .toast.show { transform: translateY(0); }
     .toast-icon { width: 18px; height: 18px; }
     
+    /* Loading */
     .loading-crown { width: 60px; height: 60px; margin-bottom: 18px; }
     .loading-title { font-size: 1.4rem; letter-spacing: 4px; margin-bottom: 24px; }
     .loading-bar { width: 220px; height: 3px; margin-bottom: 14px; }
     .loading-text { font-size: 0.72rem; letter-spacing: 1px; }
     
-    .grid-overlay {
-        background-size: 40px 40px;
-        opacity: 0.5;
-    }
+    .grid-overlay { background-size: 40px 40px; opacity: 0.5; }
     
-    /* === MOBILE SCROLL FIX === */
+    /* Scroll fix */
     body {
-        transform: translate3d(0, 0, 0);
-        -webkit-backface-visibility: hidden;
-        backface-visibility: hidden;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior-y: none;
-    }
-    
-    html { scroll-behavior: auto !important; }
-    
-    * { will-change: auto !important; }
-    
-    .form-panel,
-    .info-panel,
-    .form-card {
-        perspective: none !important;
-        transform-style: flat !important;
-    }
-    
-    .container,
-    .info-panel,
-    .form-panel,
-    .form-card {
-        -webkit-transform: translate3d(0, 0, 0);
         transform: translate3d(0, 0, 0);
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
@@ -2366,144 +2245,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .form-step,
     .form-group { contain: layout style; }
     
-    /* === MOBILE INTERACTIVE === */
-    .nav-btn,
-    .submit-btn,
-    .modal-btn,
-    .feature-item,
-    .upload-area,
-    .checkbox-wrapper,
-    .remove-btn {
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    /* Jam & ring tetap aktif */
+    .clock-icon {
+        animation: rotateClockSmooth 2s ease-in-out infinite !important;
     }
     
-    .nav-btn:active,
+    /* Haptic feedback */
     .submit-btn:active,
+    .next-btn:active,
+    .prev-btn:active,
+    .nav-btn:active,
     .modal-btn:active {
-        transform: scale(0.96) !important;
+        transform: scale(0.97) !important;
+        transition: transform 0.1s !important;
     }
     
-    .feature-item:active { transform: scale(0.99) !important; }
-    .upload-area:active { transform: scale(0.98) !important; }
-    
-    .tap-ripple {
-        position: absolute;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(253, 224, 71, 0.7), rgba(220, 38, 38, 0.3), transparent 70%);
-        transform: scale(0);
-        animation: tapRipple 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        pointer-events: none;
-        z-index: 10;
+    /* Pause animations on scroll */
+    body.scrolling-active .upload-ring,
+    body.scrolling-active .upload-ring::before,
+    body.scrolling-active .clock-icon {
+        animation-play-state: paused !important;
     }
     
-    @keyframes tapRipple {
-        to { transform: scale(3); opacity: 0; }
-    }
-    
-    .form-group:focus-within label {
-        color: var(--red-700);
-        transform: translateX(2px);
-    }
-    
-    .form-group:focus-within .label-number {
-        background: var(--royal-gradient);
-        color: white;
-        transform: scale(1.1) rotate(-5deg);
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .input-wrapper input.input-valid,
-    .input-wrapper textarea.input-valid,
-    .input-wrapper select.input-valid {
-        border-color: #22c55e !important;
-        background: linear-gradient(135deg, #f0fdf4, #ffffff) !important;
-        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15) !important;
-    }
-    
-    .step { cursor: pointer; }
-    .step:active .step-circle { transform: scale(0.9) !important; }
-    
-    .info-panel.header-hidden {
-        transform: translateY(-20px) !important;
-        opacity: 0.6;
-    }
-    
-    .swipe-hint {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: none;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        background: rgba(255, 255, 255, 0.95);
-        border: 1px solid rgba(202, 138, 4, 0.3);
-        border-radius: 50px;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: var(--red-700);
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-        z-index: 50;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .swipe-hint.show {
-        display: flex;
-        opacity: 1;
-    }
-    
-    .pull-indicator {
-        position: fixed;
-        top: 60px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-100px);
-        width: 40px;
-        height: 40px;
-        background: white;
-        border: 2px solid var(--gold-500);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
-        z-index: 999;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        opacity: 0;
-        pointer-events: none;
-    }
-    
-    .pull-indicator.show {
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
-    
-    .pull-indicator svg {
-        width: 20px;
-        height: 20px;
-        color: var(--red-600);
-        animation: pullSpin 1s linear infinite;
-    }
-    
-    @keyframes pullSpin { to { transform: rotate(360deg); } }
-    
-    .form-step.active .form-group {
-        animation: formGroupFadeIn 0.4s ease backwards;
-    }
-    
-    @keyframes formGroupFadeIn {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .info-footer .status-dot span {
-        animation: statusPulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes statusPulse {
-        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-        50% { transform: scale(1.2); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    /* Buttons always clickable */
+    body.scrolling-active .submit-btn,
+    body.scrolling-active .next-btn,
+    body.scrolling-active .prev-btn {
+        pointer-events: auto !important;
     }
 }
 
@@ -2511,461 +2279,32 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     .container { padding: 56px 10px 32px; }
     .info-title { font-size: 1.7rem; }
     .info-subtitle { font-size: 0.92rem; }
-    
-    .school-logo-box {
-        max-width: 200px;
-        height: 68px;
-    }
-    
+    .school-logo-box { max-width: 200px; height: 68px; }
     .school-name { font-size: 1.05rem; }
-    
-    .form-card {
-        padding: 20px 14px;
-        border-radius: 20px;
-    }
-    
-    .step-circle {
-        width: 30px;
-        height: 30px;
-        font-size: 0.75rem;
-    }
-    
+    .form-card { padding: 20px 14px; border-radius: 20px; }
+    .step-circle { width: 30px; height: 30px; font-size: 0.75rem; }
     .stat-number { font-size: 1.2rem; }
-    
-    .feature-icon {
-        width: 36px;
-        height: 36px;
-    }
-    
+    .feature-icon { width: 36px; height: 36px; }
     .feature-icon svg { width: 18px; height: 18px; }
-    
-    .swipe-hint {
-        font-size: 0.68rem;
-        padding: 6px 12px;
-        bottom: 16px;
-    }
 }
 
-/* ============================================
-   FIX: BLINKING ISSUE ON STEP 2 & 3
-   Menimpa rule yang menyebabkan kedip-kedip
-============================================ */
-
-/* === FIX 1: HILANGKAN ANIMASI GANDA DI FORM STEP === */
-/* Hanya boleh 1 animasi aktif */
-.form-step.active {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-/* Animasi sederhana khusus mobile */
-@media (max-width: 768px) {
-    .form-step.active {
-        animation: simpleStepIn 0.25s ease-out !important;
+@media (hover: none) and (pointer: coarse) {
+    .feature-item:hover,
+    .nav-btn:hover,
+    .submit-btn:hover {
+        transform: none !important;
     }
     
-    @keyframes simpleStepIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
+    .submit-btn:active,
+    .next-btn:active,
+    .prev-btn:active,
+    .nav-btn:active {
+        transform: scale(0.97) !important;
     }
 }
 
-/* === FIX 2: HILANGKAN ANIMASI STAGGER DI FORM GROUP === */
-/* Stagger animation bikin kedip karena dipanggil ulang */
-.form-step .form-group {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-/* Override backward fill-mode */
-.form-group {
-    animation-fill-mode: none !important;
-}
-
-/* === FIX 3: HILANGKAN ANIMASI FORM GROUP FADEIN === */
-@media (max-width: 1024px) and (hover: none) {
-    .form-step.active .form-group {
-        animation: none !important;
-    }
-    
-    .form-step.active .form-group:nth-child(1),
-    .form-step.active .form-group:nth-child(2),
-    .form-step.active .form-group:nth-child(3),
-    .form-step.active .form-group:nth-child(4),
-    .form-step.active .form-group:nth-child(5) {
-        animation-delay: 0s !important;
-    }
-}
-
-/* === FIX 4: HILANGKAN ANIMASI REVERSE YANG BIKIN KEDIP === */
-.form-step.reverse {
-    animation: none !important;
-}
-
-.form-step.active.reverse {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-/* === FIX 5: HILANGKAN ANIMASI STEP ENTRY === */
-@keyframes stepEntry {
-    from { opacity: 1; transform: none; }
-    to { opacity: 1; transform: none; }
-}
-
-@keyframes fadeInUp {
-    from { opacity: 1; transform: none; }
-    to { opacity: 1; transform: none; }
-}
-
-/* === FIX 6: PASTIKAN INPUT TIDAK KEDIP SAAT FOCUS === */
-@media (max-width: 768px) {
-    .input-wrapper input,
-    .input-wrapper textarea,
-    .input-wrapper select {
-        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
-    }
-    
-    /* Matikan input-valid animation */
-    .input-wrapper input.input-valid,
-    .input-wrapper textarea.input-valid,
-    .input-wrapper select.input-valid {
-        animation: none !important;
-    }
-    
-    /* Matikan input glow di mobile */
-    .input-glow {
-        display: none !important;
-    }
-    
-    /* Matikan input border animation */
-    .input-border {
-        animation: none !important;
-        display: none !important;
-    }
-}
-
-/* === FIX 7: STABILISASI SCROLL PROGRESS === */
-.scroll-progress-bar {
-    will-change: width;
-    transform: translateZ(0);
-}
-
-/* === FIX 8: HILANGKAN ANIMASI YANG JALAN TERUS DI MOBILE === */
-@media (max-width: 768px) {
-    /* Matikan animasi yang bikin repaint */
-    .live-clock-content,
-    .clock-icon,
-    .toast-icon,
-    .info-footer .status-dot span {
-        animation: none !important;
-    }
-    
-    /* Matikan animasi pulse di step circle */
-    .step.active .step-circle {
-        animation: none !important;
-    }
-    
-    /* Matikan step line animation */
-    .step-line.active {
-        animation: none !important;
-    }
-    
-    /* Matikan diamond glow animation */
-    .school-divider .diamond,
-    .logo-corners span,
-    .modal-crown {
-        animation: none !important;
-    }
-}
-
-/* === FIX 9: STABILISASI STEP TRANSITION === */
-/* Pakai opacity transition biasa, bukan animation */
-.form-step {
-    display: none;
-    opacity: 0;
-    transition: opacity 0.2s ease-out;
-}
-
-.form-step.active {
-    display: block;
+/* Reveal */
+.reveal {
     opacity: 1;
-}
-
-/* Mobile - instant, no transition */
-@media (max-width: 768px) {
-    .form-step {
-        transition: none !important;
-    }
-    
-    .form-step.active {
-        opacity: 1 !important;
-    }
-}
-
-/* === FIX 10: HILANGKAN TRANSFORM YANG BIKIN KEDIP === */
-@media (max-width: 768px) {
-    .container,
-    .info-panel,
-    .form-panel,
-    .form-card,
-    .form-header,
-    .step-indicator,
-    .form-group,
-    .form-navigation,
-    .input-wrapper {
-        transform: none !important;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-    }
-    
-    /* Prevent repaint saat scroll */
-    .form-card,
-    .form-step,
-    .form-group {
-        contain: none !important;
-    }
-}
-
-/* === FIX 11: HEADER AUTO-HIDE TIDAK BIKIN KEDIP === */
-@media (max-width: 768px) {
-    .info-panel {
-        transition: opacity 0.3s ease !important;
-    }
-    
-    .info-panel.header-hidden {
-        transform: none !important;
-        opacity: 0.5 !important;
-    }
-}
-
-/* ============================================
-   RESTORE: TYPING EFFECT + INPUT VALID GREEN
-   Versi aman tanpa kedip
-============================================ */
-
-/* === 1. TYPING EFFECT - AKTIFKAN KEMBALI === */
-.gold-text {
-    display: inline-block;
-    background: linear-gradient(90deg, #ca8a04, #dc2626, #fde047, #dc2626, #ca8a04);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s linear infinite;
-    min-height: 1.1em;
-    position: relative;
-}
-
-.gold-text::after {
-    content: '|';
-    -webkit-text-fill-color: var(--red-500);
-    animation: cursorBlink 0.8s step-end infinite;
-    margin-left: 4px;
-    font-weight: 300;
-}
-
-@keyframes cursorBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-
-/* Pastikan typing tidak hilang di mobile */
-@media (max-width: 768px) {
-    .gold-text {
-        min-width: 5ch;
-        min-height: 1.2em;
-    }
-    
-    .gold-text::after {
-        animation: cursorBlink 0.8s step-end infinite !important;
-    }
-}
-
-/* === 2. INPUT VALID HIJAU - VERSI STABIL === */
-/* Border hijau ketika input valid, tanpa animasi berlebihan */
-.input-wrapper input.input-valid,
-.input-wrapper textarea.input-valid,
-.input-wrapper select.input-valid {
-    border-color: #22c55e !important;
-    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12), 0 4px 12px -4px rgba(34, 197, 94, 0.2) !important;
-    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease !important;
-}
-
-/* Icon hijau ketika input valid */
-.input-wrapper input.input-valid ~ .input-icon,
-.input-wrapper textarea.input-valid ~ .input-icon,
-.input-wrapper select.input-valid ~ .input-icon {
-    color: #22c55e !important;
-    transition: color 0.25s ease !important;
-}
-
-/* Checkmark hijau kecil di kanan input */
-.input-wrapper input.input-valid::after,
-.input-wrapper textarea.input-valid::after {
-    content: '✓';
-    position: absolute;
-    right: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #22c55e;
-    font-weight: 700;
-    font-size: 1rem;
-    opacity: 0;
-    animation: checkmarkPop 0.3s ease-out forwards;
-}
-
-@keyframes checkmarkPop {
-    from {
-        opacity: 0;
-        transform: translateY(-50%) scale(0.5);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(-50%) scale(1);
-    }
-}
-
-/* Label hijau ketika input valid */
-.form-group:has(.input-valid) label {
-    color: #15803d !important;
-    transition: color 0.25s ease !important;
-}
-
-.form-group:has(.input-valid) .label-number {
-    background: linear-gradient(135deg, #86efac, #22c55e) !important;
-    color: white !important;
-    border-color: #16a34a !important;
-    transition: all 0.25s ease !important;
-}
-
-/* === 3. TRANSISI SMOOTH INPUT FOCUS === */
-.input-wrapper input,
-.input-wrapper textarea,
-.input-wrapper select {
-    transition: 
-        border-color 0.25s ease,
-        background 0.25s ease,
-        box-shadow 0.25s ease,
-        transform 0.2s ease !important;
-}
-
-/* === 4. STEP CIRCLE HIJAU UNTUK STEP SELESAI === */
-.step.completed .step-circle {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    border-color: #15803d !important;
-    color: white !important;
-    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
-}
-
-/* === 5. PROGRESS INDICATOR HIJAU === */
-.step-line.completed {
-    background: linear-gradient(90deg, #22c55e, #16a34a) !important;
-}
-
-/* Icon jam berputar di HP */
-.clock-icon {
-    animation: rotateClockSmooth 2s ease-in-out infinite !important;
-    transform-origin: center center;
-    will-change: transform;
-}
-
-@keyframes rotateClockSmooth {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-    .clock-icon {
-        animation: rotateClockSmooth 2s ease-in-out infinite !important;
-    }
-}
-
-.clock-time {
-    animation: clockTimePulse 2s ease-in-out infinite !important;
-}
-
-@keyframes clockTimePulse {
-    0%, 100% {
-        color: #b91c1c;
-        text-shadow: 0 0 0 transparent;
-    }
-    50% {
-        color: #dc2626;
-        text-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
-    }
-}
-
-/* Lingkaran berputar pada icon upload foto */
-
-.upload-ring {
-    display: block !important;
-    position: absolute;
-    inset: -8px;
-    border: 2px dashed rgba(220, 38, 38, 0.5);
-    border-radius: 50%;
-    animation: uploadRingRotate 8s linear infinite !important;
-    transform-origin: center center;
-    will-change: transform;
-    pointer-events: none;
-}
-
-.upload-ring::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border: 1px dashed rgba(234, 179, 8, 0.4);
-    border-radius: 50%;
-    animation: uploadRingRotateReverse 12s linear infinite !important;
-    transform-origin: center center;
-}
-
-@keyframes uploadRingRotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes uploadRingRotateReverse {
-    from { transform: rotate(360deg); }
-    to { transform: rotate(0deg); }
-}
-
-/* Pause saat scroll untuk hemat */
-body.scrolling-active .upload-ring,
-body.scrolling-active .upload-ring::before {
-    animation-play-state: paused !important;
-}
-
-/* Khusus mobile */
-@media (max-width: 768px) {
-    .upload-ring {
-        animation: uploadRingRotate 8s linear infinite !important;
-        inset: -6px;
-        border-color: rgba(220, 38, 38, 0.6);
-    }
-    
-    .upload-ring::before {
-        animation: uploadRingRotateReverse 12s linear infinite !important;
-        inset: -10px;
-        border-color: rgba(234, 179, 8, 0.5);
-    }
-    
-    .upload-icon-wrapper {
-        width: 70px;
-        height: 70px;
-    }
-}
-
-/* Sembunyikan saat foto sudah diupload */
-.upload-area.preview-active .upload-ring,
-.upload-area.preview-active .upload-ring::before {
-    display: none !important;
+    transform: none;
 }
