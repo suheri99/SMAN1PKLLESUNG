@@ -2096,3 +2096,38 @@ if (isMobile) {
     console.log('   - Step completed green: active');
     console.log('   - Debounce: 400ms');
 })();
+
+// ============================================
+// HIDE RING SAAT FOTO SUDAH DIUPLOAD
+// ============================================
+
+(function autoHideRing() {
+    const uploadAreaEl = document.getElementById('uploadArea');
+    const previewContentEl = document.getElementById('previewContent');
+    
+    if (!uploadAreaEl || !previewContentEl) return;
+    
+    // Observer untuk cek class 'active' pada preview
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                if (previewContentEl.classList.contains('active')) {
+                    // Foto sudah diupload - sembunyikan ring
+                    uploadAreaEl.classList.add('preview-active');
+                } else {
+                    // Foto dihapus - tampilkan ring lagi
+                    uploadAreaEl.classList.remove('preview-active');
+                }
+            }
+        });
+    });
+    
+    observer.observe(previewContentEl, { attributes: true, attributeFilter: ['class'] });
+    
+    // Cek saat load
+    if (previewContentEl.classList.contains('active')) {
+        uploadAreaEl.classList.add('preview-active');
+    }
+    
+    console.log('✅ Upload ring auto-hide active');
+})();
