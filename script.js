@@ -1,7 +1,7 @@
 // ============================================
 // KONFIGURASI
 // ============================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqhub74-zw0J2OMW5yPL5kFf2u7wFlfOkinXQ2lnesulUJaTe-HGtOKGtLthUpH1FV/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
 
 // ============================================
 // DEVICE DETECTION
@@ -16,36 +16,14 @@ if (isMobile) document.body.classList.add('is-mobile');
 if (isTouchDevice) document.body.classList.add('is-touch');
 if (isLowEnd) document.body.classList.add('is-low-end');
 
-console.log('📱 Device Info:', {
-    isMobile, isTouchDevice, isLowEnd, isAndroid, isOppo,
-    cores: navigator.hardwareConcurrency,
-    screen: `${window.innerWidth}x${window.innerHeight}`
-});
+console.log('📱 Device:', { isMobile, isTouchDevice, isLowEnd, isAndroid, isOppo });
 
 // ============================================
-// ELEMENTS
+// STATE
 // ============================================
-const form = document.getElementById('dataForm');
-const fileInput = document.getElementById('foto');
-const uploadArea = document.getElementById('uploadArea');
-const uploadContent = document.getElementById('uploadContent');
-const previewContent = document.getElementById('previewContent');
-const previewImage = document.getElementById('previewImage');
-const removeBtn = document.getElementById('removeBtn');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const submitBtn = document.getElementById('submitBtn');
-const nextBtn = document.getElementById('nextBtn');
-const prevBtn = document.getElementById('prevBtn');
-const scrollProgress = document.getElementById('scrollProgress');
-const cursorGlow = document.getElementById('cursorGlow');
-const cursorSparkle = document.getElementById('cursorSparkle');
-const loadingScreen = document.getElementById('loadingScreen');
-const loadingBar = document.getElementById('loadingBar');
-
-let selectedFile = null;
 let currentStep = 1;
 const totalSteps = 3;
+let selectedFile = null;
 
 // ============================================
 // HAPTIC FEEDBACK
@@ -60,6 +38,11 @@ function haptic(pattern = 10) {
 // LOADING SCREEN
 // ============================================
 window.addEventListener('load', () => {
+    const loadingBar = document.getElementById('loadingBar');
+    const loadingScreen = document.getElementById('loadingScreen');
+    
+    if (!loadingBar || !loadingScreen) return;
+    
     let progress = 0;
     const interval = setInterval(() => {
         progress += Math.random() * 15;
@@ -71,7 +54,6 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 loadingScreen.classList.add('hidden');
                 document.body.style.overflow = 'auto';
-                triggerReveal();
                 startCounters();
             }, 500);
         } else {
@@ -85,47 +67,68 @@ document.body.style.overflow = 'hidden';
 // ============================================
 // TYPING EFFECT
 // ============================================
-const typingText = document.getElementById('typingText');
-const words = ['Siswa', 'SMAN1', 'Pangkalan', 'Lesung'];
-let wordIndex = 0;
-let charIndex = 0;
-let isDeleting = false;
+const typingTextEl = document.getElementById('typingText');
 
-function typeEffect() {
-    const currentWord = words[wordIndex];
+if (typingTextEl) {
+    const typingWords = ['Siswa', 'SMANSA', 'Pangkalan Kuras', 'Berprestasi', 'Juara'];
+    let wordIdx = 0;
+    let charIdx = 0;
+    let deleting = false;
+    let typingTimer = null;
+    let typingActive = true;
     
-    if (isDeleting) {
-        typingText.textContent = currentWord.substring(0, charIndex - 1);
-        charIndex--;
-    } else {
-        typingText.textContent = currentWord.substring(0, charIndex + 1);
-        charIndex++;
+    function runTyping() {
+        if (!typingActive || !typingTextEl) return;
+        
+        const word = typingWords[wordIdx];
+        
+        if (deleting) {
+            typingTextEl.textContent = word.substring(0, charIdx - 1);
+            charIdx--;
+        } else {
+            typingTextEl.textContent = word.substring(0, charIdx + 1);
+            charIdx++;
+        }
+        
+        let speed = deleting ? 70 : 130;
+        
+        if (!deleting && charIdx === word.length) {
+            speed = 2200;
+            deleting = true;
+        } else if (deleting && charIdx === 0) {
+            deleting = false;
+            wordIdx = (wordIdx + 1) % typingWords.length;
+            speed = 500;
+        }
+        
+        typingTimer = setTimeout(runTyping, speed);
     }
     
-    let typeSpeed = isDeleting ? 60 : 120;
+    setTimeout(runTyping, 1800);
     
-    if (!isDeleting && charIndex === currentWord.length) {
-        typeSpeed = 2000;
-        isDeleting = true;
-    } else if (isDeleting && charIndex === 0) {
-        isDeleting = false;
-        wordIndex = (wordIndex + 1) % words.length;
-        typeSpeed = 500;
-    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            typingActive = false;
+            if (typingTimer) clearTimeout(typingTimer);
+        } else {
+            if (!typingActive) {
+                typingActive = true;
+                runTyping();
+            }
+        }
+    });
     
-    setTimeout(typeEffect, typeSpeed);
+    console.log('✅ Typing effect active');
 }
-
-setTimeout(typeEffect, 1500);
 
 // ============================================
 // LIVE CLOCK
 // ============================================
 function updateClock() {
     const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
     
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -133,7 +136,7 @@ function updateClock() {
     const clockEl = document.getElementById('liveClock');
     const dateEl = document.getElementById('liveDate');
     
-    if (clockEl) clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+    if (clockEl) clockEl.textContent = `${h}:${m}:${s}`;
     if (dateEl) dateEl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 }
 
@@ -141,69 +144,63 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ============================================
-// CURSOR EFFECTS - DESKTOP ONLY
+// CURSOR EFFECTS (Desktop only)
 // ============================================
-if (!isMobile && !isTouchDevice && window.innerWidth > 768) {
-    let mouseX = 0, mouseY = 0;
-    let glowX = 0, glowY = 0;
+if (!isMobile && !isTouchDevice) {
+    const cursorGlow = document.getElementById('cursorGlow');
+    const cursorSparkle = document.getElementById('cursorSparkle');
     
-    document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
+    if (cursorGlow && cursorSparkle) {
+        let mouseX = 0, mouseY = 0, glowX = 0, glowY = 0;
         
-        if (cursorSparkle) {
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
             cursorSparkle.style.left = mouseX + 'px';
             cursorSparkle.style.top = mouseY + 'px';
             cursorSparkle.classList.add('active');
-        }
-    });
-    
-    function animateGlow() {
-        glowX += (mouseX - glowX) * 0.1;
-        glowY += (mouseY - glowY) * 0.1;
+        });
         
-        if (cursorGlow) {
+        function animateGlow() {
+            glowX += (mouseX - glowX) * 0.1;
+            glowY += (mouseY - glowY) * 0.1;
             cursorGlow.style.left = glowX + 'px';
             cursorGlow.style.top = glowY + 'px';
+            requestAnimationFrame(animateGlow);
         }
+        animateGlow();
         
-        requestAnimationFrame(animateGlow);
+        document.addEventListener('mouseleave', () => {
+            cursorGlow.style.opacity = '0';
+            cursorSparkle.classList.remove('active');
+        });
+        
+        document.addEventListener('mouseenter', () => {
+            cursorGlow.style.opacity = '1';
+            cursorSparkle.classList.add('active');
+        });
     }
-    animateGlow();
-    
-    document.addEventListener('mouseleave', () => {
-        if (cursorGlow) cursorGlow.style.opacity = '0';
-        if (cursorSparkle) cursorSparkle.classList.remove('active');
-    });
-    
-    document.addEventListener('mouseenter', () => {
-        if (cursorGlow) cursorGlow.style.opacity = '1';
-        if (cursorSparkle) cursorSparkle.classList.add('active');
-    });
 }
 
 // ============================================
-// PARTICLE NETWORK - WORKS ON MOBILE + DESKTOP
+// PARTICLE NETWORK
 // ============================================
 const particleCanvas = document.getElementById('particleCanvas');
-const ctx = particleCanvas ? particleCanvas.getContext('2d', {
-    alpha: true,
-    desynchronized: isMobile // Better performance on mobile
-}) : null;
+const ctx = particleCanvas ? particleCanvas.getContext('2d', { alpha: true, desynchronized: isMobile }) : null;
 
 let particles = [];
-let particleAnimationId = null;
+let particleRAF = null;
+let isScrollingParticles = false;
+let isPageVisible = true;
+let scrollTimerParticles;
 
 function resizeCanvas() {
     if (!particleCanvas) return;
-    
     const dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
-    
     particleCanvas.width = window.innerWidth * dpr;
     particleCanvas.height = window.innerHeight * dpr;
     particleCanvas.style.width = window.innerWidth + 'px';
     particleCanvas.style.height = window.innerHeight + 'px';
-    
     if (dpr > 1) {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
@@ -211,20 +208,14 @@ function resizeCanvas() {
 }
 
 function getParticleCount() {
-    if (!isMobile) {
-        // Desktop - banyak partikel
-        return Math.min(Math.floor(window.innerWidth / 25), 50);
-    }
+    if (!isMobile) return Math.min(Math.floor(window.innerWidth / 25), 50);
     
-    // Mobile - adaptive
     const cores = navigator.hardwareConcurrency || 4;
     const memory = navigator.deviceMemory || 4;
-    
     let score = 0;
     if (cores >= 8) score += 3;
     else if (cores >= 6) score += 2;
     else if (cores >= 4) score += 1;
-    
     if (memory >= 6) score += 3;
     else if (memory >= 4) score += 2;
     else if (memory >= 2) score += 1;
@@ -250,12 +241,8 @@ class Particle {
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        
         if (this.x < 0 || this.x > window.innerWidth) this.vx *= -1;
         if (this.y < 0 || this.y > window.innerHeight) this.vy *= -1;
-        
-        this.x = Math.max(0, Math.min(window.innerWidth, this.x));
-        this.y = Math.max(0, Math.min(window.innerHeight, this.y));
     }
     
     draw() {
@@ -271,30 +258,26 @@ function initParticles() {
     if (!ctx) return;
     particles = [];
     const count = getParticleCount();
-    for (let i = 0; i < count; i++) {
-        particles.push(new Particle());
-    }
-    console.log(`✨ Created ${count} particles (${isMobile ? 'mobile' : 'desktop'})`);
+    for (let i = 0; i < count; i++) particles.push(new Particle());
+    console.log(`✨ ${count} particles created`);
 }
 
 function connectParticles() {
     if (!ctx) return;
-    
-    const distance = isMobile ? 90 : 100;
-    const maxOpacity = isMobile ? 0.35 : 0.15;
+    const dist = isMobile ? 90 : 100;
+    const maxOp = isMobile ? 0.35 : 0.15;
     
     for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
             const dx = particles[i].x - particles[j].x;
             const dy = particles[i].y - particles[j].y;
-            const distSq = dx * dx + dy * dy;
+            const dSq = dx * dx + dy * dy;
             
-            if (distSq < distance * distance) {
-                const dist = Math.sqrt(distSq);
-                const opacity = (1 - dist / distance) * maxOpacity;
-                
+            if (dSq < dist * dist) {
+                const d = Math.sqrt(dSq);
+                const op = (1 - d / dist) * maxOp;
                 ctx.beginPath();
-                ctx.strokeStyle = `rgba(202, 138, 4, ${opacity})`;
+                ctx.strokeStyle = `rgba(202, 138, 4, ${op})`;
                 ctx.lineWidth = isMobile ? 0.6 : 0.5;
                 ctx.moveTo(particles[i].x, particles[i].y);
                 ctx.lineTo(particles[j].x, particles[j].y);
@@ -304,66 +287,41 @@ function connectParticles() {
     }
 }
 
-// FPS limiting
 let lastFrameTime = 0;
-const FRAME_INTERVAL = isMobile ? (1000 / 24) : (1000 / 60); // 24 FPS mobile, 60 FPS desktop
-
-// Pause states
-let isScrolling = false;
-let isPageVisible = true;
-let scrollTimer;
+const FRAME_INTERVAL = isMobile ? (1000 / 24) : (1000 / 60);
 
 function animateParticles(timestamp) {
     if (!ctx) return;
+    particleRAF = requestAnimationFrame(animateParticles);
     
-    particleAnimationId = requestAnimationFrame(animateParticles);
-    
-    // Skip jika scroll atau tab tidak aktif
-    if (isScrolling || !isPageVisible) return;
-    
-    // FPS limit
+    if (isScrollingParticles || !isPageVisible) return;
     if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
     lastFrameTime = timestamp;
     
     ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    
-    particles.forEach(p => {
-        p.update();
-        p.draw();
-    });
-    
+    particles.forEach(p => { p.update(); p.draw(); });
     connectParticles();
 }
 
-// Initialize particles
 if (particleCanvas && ctx) {
     resizeCanvas();
     initParticles();
-    particleAnimationId = requestAnimationFrame(animateParticles);
-    console.log('✅ Particle network started');
+    particleRAF = requestAnimationFrame(animateParticles);
     
-    // Resize handler
-    let resizeTimer;
+    let resizeT;
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            resizeCanvas();
-            initParticles();
-        }, 300);
+        clearTimeout(resizeT);
+        resizeT = setTimeout(() => { resizeCanvas(); initParticles(); }, 300);
     }, { passive: true });
     
-    // Pause on scroll (mobile)
     if (isMobile) {
         window.addEventListener('scroll', () => {
-            isScrolling = true;
-            clearTimeout(scrollTimer);
-            scrollTimer = setTimeout(() => {
-                isScrolling = false;
-            }, 150);
+            isScrollingParticles = true;
+            clearTimeout(scrollTimerParticles);
+            scrollTimerParticles = setTimeout(() => { isScrollingParticles = false; }, 150);
         }, { passive: true });
     }
     
-    // Pause when tab hidden
     document.addEventListener('visibilitychange', () => {
         isPageVisible = !document.hidden;
     });
@@ -373,14 +331,14 @@ if (particleCanvas && ctx) {
 // SCROLL PROGRESS
 // ============================================
 let scrollTicking = false;
-
 window.addEventListener('scroll', () => {
     if (!scrollTicking) {
         requestAnimationFrame(() => {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const progress = (scrollTop / scrollHeight) * 100;
-            if (scrollProgress) scrollProgress.style.width = progress + '%';
+            const st = window.pageYOffset || document.documentElement.scrollTop;
+            const sh = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const p = (st / sh) * 100;
+            const el = document.getElementById('scrollProgress');
+            if (el) el.style.width = p + '%';
             scrollTicking = false;
         });
         scrollTicking = true;
@@ -388,40 +346,18 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ============================================
-// 3D TILT - DESKTOP ONLY
+// SCROLL DETECTION (untuk pause animasi)
 // ============================================
-if (!isMobile && !isTouchDevice) {
-    document.querySelectorAll('[data-tilt]').forEach(element => {
-        element.addEventListener('mousemove', (e) => {
-            const rect = element.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = (y - centerY) / 25;
-            const rotateY = (centerX - x) / 25;
-            
-            element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
-        });
-        
-        element.addEventListener('mouseleave', () => {
-            element.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
-        });
-    });
-}
-
-// ============================================
-// SCROLL REVEAL
-// ============================================
-function triggerReveal() {
-    const reveals = document.querySelectorAll('.feature-item, .stat-item, .form-card, .info-panel');
-    reveals.forEach((el, index) => {
-        el.classList.add('reveal');
-        setTimeout(() => {
-            el.classList.add('active');
-        }, index * 100);
-    });
-}
+let scrollBodyTimer;
+window.addEventListener('scroll', () => {
+    if (!document.body.classList.contains('scrolling-active')) {
+        document.body.classList.add('scrolling-active');
+    }
+    clearTimeout(scrollBodyTimer);
+    scrollBodyTimer = setTimeout(() => {
+        document.body.classList.remove('scrolling-active');
+    }, 100);
+}, { passive: true });
 
 // ============================================
 // COUNTER ANIMATION
@@ -431,310 +367,210 @@ function startCounters() {
         const target = parseInt(counter.getAttribute('data-count'));
         const duration = isMobile ? 1200 : 2000;
         const step = target / (duration / 16);
-        let current = 0;
+        let cur = 0;
         
-        const updateCounter = () => {
-            current += step;
-            if (current < target) {
-                counter.textContent = Math.ceil(current);
-                requestAnimationFrame(updateCounter);
+        const update = () => {
+            cur += step;
+            if (cur < target) {
+                counter.textContent = Math.ceil(cur);
+                requestAnimationFrame(update);
             } else {
                 counter.textContent = target;
             }
         };
-        
-        setTimeout(updateCounter, isMobile ? 400 : 800);
+        setTimeout(update, isMobile ? 400 : 800);
     });
 }
 
 // ============================================
-// RIPPLE EFFECT
+// INPUT VALIDATION HIJAU
 // ============================================
-document.querySelectorAll('.submit-btn, .next-btn, .nav-btn, .modal-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const ripple = document.createElement('span');
-        ripple.className = 'ripple';
-        ripple.style.left = x + 'px';
-        ripple.style.top = y + 'px';
-        ripple.style.width = ripple.style.height = '20px';
-        
-        this.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 600);
-    });
-});
+const debounceTimers = new Map();
+const DEBOUNCE_DELAY = 350;
 
-// ============================================
-// TAP RIPPLE (Mobile)
-// ============================================
-if (isMobile) {
-    const tappableElements = document.querySelectorAll(
-        '.nav-btn, .submit-btn, .modal-btn, .feature-item, ' +
-        '.step, .upload-area, .checkbox-wrapper, .next-btn, .prev-btn'
+function validateInput(input) {
+    const value = input.value.trim();
+    
+    if (input.type === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (input.type === 'date') return value !== '';
+    if (input.type === 'tel') return /^[0-9+\-\s()]{8,15}$/.test(value);
+    if (input.id === 'nama') return value.length >= 3;
+    if (input.id === 'nisn') return value.length >= 3;
+    if (input.id === 'alamat') return value.length >= 1;
+    if (input.id === 'tempatLahir') return value.length >= 2;
+    if (input.tagName === 'SELECT') return value !== '';
+    if (input.tagName === 'TEXTAREA') return value.length >= 1;
+    
+    return value.length >= 1;
+}
+
+function applyValidState(input, isValid) {
+    const formGroup = input.closest('.form-group');
+    
+    if (isValid) {
+        if (!input.classList.contains('input-valid')) {
+            input.classList.add('input-valid');
+            if (formGroup) formGroup.classList.add('has-valid');
+            haptic(8);
+        }
+    } else {
+        input.classList.remove('input-valid');
+        if (formGroup) formGroup.classList.remove('has-valid');
+    }
+}
+
+function initInputValidation() {
+    const inputs = document.querySelectorAll(
+        'input[type="text"], input[type="email"], input[type="tel"], ' +
+        'input[type="date"], textarea, select'
     );
     
-    tappableElements.forEach(el => {
-        el.addEventListener('touchstart', function(e) {
-            const touch = e.touches[0];
-            const rect = this.getBoundingClientRect();
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            
-            const ripple = document.createElement('span');
-            ripple.className = 'tap-ripple';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            ripple.style.width = ripple.style.height = '20px';
-            
-            this.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
-            haptic(15);
-        }, { passive: true });
-    });
-}
-
-// ============================================
-// LOGO FALLBACK
-// ============================================
-const schoolLogo = document.getElementById('schoolLogo');
-const logoFallback = document.getElementById('logoFallback');
-
-if (schoolLogo) {
-    schoolLogo.addEventListener('error', function() {
-        this.style.display = 'none';
-        if (logoFallback) logoFallback.style.display = 'flex';
-    });
-    
-    schoolLogo.addEventListener('load', function() {
-        if (logoFallback) logoFallback.style.display = 'none';
-    });
-}
-
-// ============================================
-// STEP NAVIGATION
-// ============================================
-function goToStep(step) {
-    if (step > currentStep && !validateStep(currentStep)) return;
-    
-    const prevStep = currentStep;
-    currentStep = step;
-    
-    document.querySelectorAll('.form-step').forEach((el) => {
-        el.classList.remove('active', 'reverse');
-        if (parseInt(el.dataset.step) === step) {
-            el.classList.add('active');
-            if (step < prevStep) el.classList.add('reverse');
-        }
-    });
-    
-    document.querySelectorAll('.step').forEach((el, index) => {
-        const stepNum = index + 1;
-        el.classList.remove('active', 'completed');
+    inputs.forEach(input => {
+        if (input.type === 'file' || input.type === 'checkbox') return;
         
-        if (stepNum === step) {
-            el.classList.add('active');
-            const ring = el.querySelector('.progress-ring');
-            if (ring) ring.style.strokeDashoffset = '0';
-        } else if (stepNum < step) {
-            el.classList.add('completed');
-            const ring = el.querySelector('.progress-ring');
-            if (ring) ring.style.strokeDashoffset = '0';
-        } else {
-            const ring = el.querySelector('.progress-ring');
-            if (ring) ring.style.strokeDashoffset = '100';
-        }
-    });
-    
-    document.querySelectorAll('.step-line').forEach((line, index) => {
-        if (index + 1 < step) {
-            line.classList.add('active');
-        } else {
-            line.classList.remove('active');
-        }
-    });
-    
-    if (step === 1) {
-        prevBtn.style.display = 'none';
-    } else {
-        prevBtn.style.display = 'flex';
-    }
-    
-    if (step === totalSteps) {
-        nextBtn.style.display = 'none';
-        submitBtn.style.display = 'flex';
-    } else {
-        nextBtn.style.display = 'flex';
-        submitBtn.style.display = 'none';
-    }
-    
-    const formCard = document.querySelector('.form-card');
-    if (formCard) {
-        if (isMobile) {
-            const rect = formCard.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            window.scrollTo({ top: scrollTop + rect.top - 80, behavior: 'auto' });
-        } else {
-            formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-}
-
-nextBtn.addEventListener('click', () => {
-    if (currentStep < totalSteps) {
-        haptic(15);
-        goToStep(currentStep + 1);
-    }
-});
-
-prevBtn.addEventListener('click', () => {
-    if (currentStep > 1) {
-        haptic(15);
-        goToStep(currentStep - 1);
-    }
-});
-
-// Step click
-if (isMobile) {
-    document.querySelectorAll('.step').forEach((stepEl) => {
-        stepEl.addEventListener('click', () => {
-            const targetStep = parseInt(stepEl.dataset.step);
-            if (targetStep === currentStep) return;
-            haptic(15);
+        input.addEventListener('input', function() {
+            const el = this;
+            if (debounceTimers.has(el)) clearTimeout(debounceTimers.get(el));
             
-            if (targetStep < currentStep) {
-                goToStep(targetStep);
-            } else if (targetStep === currentStep + 1) {
-                goToStep(targetStep);
-            }
+            const timer = setTimeout(() => {
+                applyValidState(el, validateInput(el));
+                debounceTimers.delete(el);
+            }, DEBOUNCE_DELAY);
+            
+            debounceTimers.set(el, timer);
         });
+        
+        input.addEventListener('blur', function() {
+            if (debounceTimers.has(this)) {
+                clearTimeout(debounceTimers.get(this));
+                debounceTimers.delete(this);
+            }
+            applyValidState(this, validateInput(this));
+        });
+        
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', function() {
+                applyValidState(this, validateInput(this));
+            });
+        }
     });
+    
+    console.log(`✅ Input validation: ${inputs.length} inputs`);
 }
 
 // ============================================
-// SWIPE NAVIGATION
+// TOAST & SHAKE
 // ============================================
-if (isMobile) {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isSwiping = false;
+function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    const msgEl = document.getElementById('toastMessage');
+    const icon = toast?.querySelector('.toast-icon');
     
-    const formCard = document.querySelector('.form-card');
+    if (!toast || !msgEl) return;
     
-    if (formCard) {
-        formCard.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-            isSwiping = true;
-        }, { passive: true });
-        
-        formCard.addEventListener('touchmove', (e) => {
-            if (!isSwiping) return;
-            const deltaY = Math.abs(e.changedTouches[0].screenY - touchStartY);
-            if (deltaY > 30) isSwiping = false;
-        }, { passive: true });
-        
-        formCard.addEventListener('touchend', (e) => {
-            if (!isSwiping) return;
-            const touchEndX = e.changedTouches[0].screenX;
-            const deltaX = touchEndX - touchStartX;
-            
-            if (deltaX < -50 && currentStep < totalSteps) {
-                haptic(20);
-                goToStep(currentStep + 1);
-            }
-            
-            if (deltaX > 50 && currentStep > 1) {
-                haptic(20);
-                goToStep(currentStep - 1);
-            }
-            
-            isSwiping = false;
-        }, { passive: true });
+    if (isMobile) {
+        haptic(type === 'error' ? [30, 30, 30] : [15, 30, 15]);
     }
     
-    const swipeHint = document.createElement('div');
-    swipeHint.className = 'swipe-hint';
-    swipeHint.innerHTML = `
-        <span>👈</span>
-        <span>Geser untuk navigasi</span>
-        <span class="swipe-hint-icon">👉</span>
-    `;
-    document.body.appendChild(swipeHint);
+    if (icon) {
+        icon.innerHTML = type === 'error'
+            ? `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    }
     
-    setTimeout(() => {
-        swipeHint.classList.add('show');
-        setTimeout(() => swipeHint.classList.remove('show'), 4000);
-    }, 3000);
+    msgEl.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function shakeEl(el) {
+    if (!el) return;
+    haptic([50, 30, 50]);
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = 'shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97)';
+    
+    if (!document.getElementById('shake-keyframes')) {
+        const style = document.createElement('style');
+        style.id = 'shake-keyframes';
+        style.textContent = `@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }`;
+        document.head.appendChild(style);
+    }
+    
+    setTimeout(() => { el.style.animation = ''; }, 500);
 }
 
 // ============================================
-// VALIDASI STEP
+// VALIDATION PER STEP
 // ============================================
 function validateStep(step) {
     if (step === 1) {
-        const nama = document.getElementById('nama').value.trim();
-        const kelas = document.getElementById('kelas').value;
-        const nisn = document.getElementById('nisn').value.trim();
-        const tempatLahir = document.getElementById('tempatLahir').value.trim();
-        const tanggalLahir = document.getElementById('tanggalLahir').value;
+        const nama = document.getElementById('nama')?.value.trim();
+        const kelas = document.getElementById('kelas')?.value;
+        const nisn = document.getElementById('nisn')?.value.trim();
+        const tempat = document.getElementById('tempatLahir')?.value.trim();
+        const tgl = document.getElementById('tanggalLahir')?.value;
         
         if (!nama || nama.length < 3) {
             showToast('Nama minimal 3 karakter!', 'error');
-            shakeElement(document.getElementById('nama'));
+            shakeEl(document.getElementById('nama'));
             return false;
         }
         if (!kelas) {
             showToast('Pilih kelas terlebih dahulu!', 'error');
-            shakeElement(document.getElementById('kelas'));
+            shakeEl(document.getElementById('kelas'));
             return false;
         }
         if (!nisn) {
             showToast('NISN wajib diisi!', 'error');
-            shakeElement(document.getElementById('nisn'));
+            shakeEl(document.getElementById('nisn'));
             return false;
         }
-        if (!tempatLahir) {
+        if (!tempat) {
             showToast('Isi tempat lahir!', 'error');
-            shakeElement(document.getElementById('tempatLahir'));
+            shakeEl(document.getElementById('tempatLahir'));
             return false;
         }
-        if (!tanggalLahir) {
+        if (!tgl) {
             showToast('Isi tanggal lahir!', 'error');
-            shakeElement(document.getElementById('tanggalLahir'));
+            shakeEl(document.getElementById('tanggalLahir'));
             return false;
         }
         return true;
     }
     
     if (step === 2) {
-        const alamat = document.getElementById('alamat').value.trim();
-        const agama = document.getElementById('agama').value;
+        const alamat = document.getElementById('alamat')?.value.trim();
+        const agama = document.getElementById('agama')?.value;
         
         if (!alamat) {
             showToast('Alamat wajib diisi!', 'error');
-            shakeElement(document.getElementById('alamat'));
+            shakeEl(document.getElementById('alamat'));
             return false;
         }
         if (!agama) {
             showToast('Pilih agama terlebih dahulu!', 'error');
-            shakeElement(document.getElementById('agama'));
+            shakeEl(document.getElementById('agama'));
             return false;
         }
         return true;
     }
     
     if (step === 3) {
-        if (!selectedFile) {
+        const fileInput = document.getElementById('foto');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
             showToast('Upload foto terlebih dahulu!', 'error');
-            shakeElement(uploadArea);
+            shakeEl(document.getElementById('uploadArea'));
             return false;
         }
-        if (!document.getElementById('terms').checked) {
+        const terms = document.getElementById('terms');
+        if (!terms || !terms.checked) {
             showToast('Centang pernyataan terlebih dahulu!', 'error');
-            shakeElement(document.querySelector('.checkbox-wrapper'));
+            shakeEl(document.querySelector('.checkbox-wrapper'));
             return false;
         }
         return true;
@@ -744,100 +580,209 @@ function validateStep(step) {
 }
 
 // ============================================
-// SHAKE ANIMATION
+// STEP NAVIGATION
 // ============================================
-function shakeElement(element) {
-    haptic([50, 30, 50]);
-    element.style.animation = 'none';
-    element.offsetHeight;
-    element.style.animation = 'shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97)';
+function goToStep(step) {
+    if (step > currentStep && !validateStep(currentStep)) return;
+    if (step < 1 || step > totalSteps) return;
     
-    if (!document.getElementById('shake-keyframes')) {
-        const style = document.createElement('style');
-        style.id = 'shake-keyframes';
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-                20%, 40%, 60%, 80% { transform: translateX(8px); }
-            }
-        `;
-        document.head.appendChild(style);
+    currentStep = step;
+    
+    // Update form steps
+    document.querySelectorAll('.form-step').forEach(el => {
+        el.classList.remove('active');
+        if (parseInt(el.dataset.step) === step) {
+            el.classList.add('active');
+        }
+    });
+    
+    // Update step indicator
+    document.querySelectorAll('.step').forEach((el, index) => {
+        const n = index + 1;
+        el.classList.remove('active', 'completed');
+        
+        if (n === step) {
+            el.classList.add('active');
+            const ring = el.querySelector('.progress-ring');
+            if (ring) ring.style.strokeDashoffset = '0';
+        } else if (n < step) {
+            el.classList.add('completed');
+            const ring = el.querySelector('.progress-ring');
+            if (ring) ring.style.strokeDashoffset = '0';
+        } else {
+            const ring = el.querySelector('.progress-ring');
+            if (ring) ring.style.strokeDashoffset = '100';
+        }
+    });
+    
+    // Update step lines
+    document.querySelectorAll('.step-line').forEach((line, index) => {
+        if (index + 1 < step) {
+            line.classList.add('active');
+        } else {
+            line.classList.remove('active');
+        }
+    });
+    
+    // Update buttons
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (prevBtn) {
+        prevBtn.style.display = step === 1 ? 'none' : 'flex';
+        prevBtn.style.pointerEvents = 'auto';
     }
     
-    setTimeout(() => { element.style.animation = ''; }, 500);
+    if (step === totalSteps) {
+        if (nextBtn) { nextBtn.style.display = 'none'; nextBtn.style.pointerEvents = 'none'; }
+        if (submitBtn) { submitBtn.style.display = 'flex'; submitBtn.style.pointerEvents = 'auto'; submitBtn.disabled = false; }
+    } else {
+        if (nextBtn) { nextBtn.style.display = 'flex'; nextBtn.style.pointerEvents = 'auto'; nextBtn.disabled = false; }
+        if (submitBtn) { submitBtn.style.display = 'none'; }
+    }
+    
+    // Scroll
+    const formCard = document.querySelector('.form-card');
+    if (formCard) {
+        const rect = formCard.getBoundingClientRect();
+        const st = window.pageYOffset || document.documentElement.scrollTop;
+        window.scrollTo({ top: st + rect.top - 60, behavior: 'auto' });
+    }
+    
+    haptic(15);
+    console.log(`📄 Step ${step}`);
+}
+
+// ============================================
+// BUTTON LISTENERS
+// ============================================
+function setupButtons() {
+    // Next
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn) {
+        const fresh = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(fresh, nextBtn);
+        
+        fresh.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentStep < totalSteps) goToStep(currentStep + 1);
+        });
+        
+        fresh.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentStep < totalSteps) goToStep(currentStep + 1);
+        }, { passive: false });
+    }
+    
+    // Prev
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) {
+        const fresh = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(fresh, prevBtn);
+        
+        fresh.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentStep > 1) goToStep(currentStep - 1);
+        });
+        
+        fresh.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (currentStep > 1) goToStep(currentStep - 1);
+        }, { passive: false });
+    }
+    
+    // Step click
+    document.querySelectorAll('.step').forEach(stepEl => {
+        const fresh = stepEl.cloneNode(true);
+        stepEl.parentNode.replaceChild(fresh, stepEl);
+        
+        fresh.addEventListener('click', () => {
+            const target = parseInt(fresh.dataset.step);
+            if (target === currentStep) return;
+            if (target < currentStep) goToStep(target);
+            else if (target === currentStep + 1) goToStep(target);
+        });
+    });
+    
+    console.log('✅ Buttons attached');
 }
 
 // ============================================
 // FILE UPLOAD
 // ============================================
-uploadArea.addEventListener('click', (e) => {
-    if (!previewContent.classList.contains('active')) {
+function setupFileUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('foto');
+    const uploadContent = document.getElementById('uploadContent');
+    const previewContent = document.getElementById('previewContent');
+    const previewImage = document.getElementById('previewImage');
+    const removeBtn = document.getElementById('removeBtn');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    
+    if (!uploadArea || !fileInput) return;
+    
+    uploadArea.addEventListener('click', (e) => {
+        if (previewContent && previewContent.classList.contains('active')) return;
         fileInput.click();
-    }
-});
-
-fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) handleFile(file);
-});
-
-['dragenter', 'dragover'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        uploadArea.classList.add('dragover');
     });
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    uploadArea.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        uploadArea.classList.remove('dragover');
-    });
-});
-
-uploadArea.addEventListener('drop', (e) => {
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-});
-
-function handleFile(file) {
-    if (!file.type.startsWith('image/')) {
-        showToast('File harus berupa gambar!', 'error');
-        return;
-    }
     
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('Ukuran file maksimal 5MB!', 'error');
-        return;
-    }
-    
-    selectedFile = file;
-    haptic([15, 30]);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        fileName.textContent = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
-        fileSize.textContent = formatFileSize(file.size);
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
         
-        uploadContent.classList.add('hidden');
-        previewContent.classList.add('active');
-    };
-    reader.readAsDataURL(file);
+        if (!file.type.startsWith('image/')) {
+            showToast('File harus berupa gambar!', 'error');
+            fileInput.value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Ukuran file maksimal 5MB!', 'error');
+            fileInput.value = '';
+            return;
+        }
+        
+        selectedFile = file;
+        haptic([15, 30]);
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            if (previewImage) previewImage.src = ev.target.result;
+            if (fileNameEl) {
+                fileNameEl.textContent = file.name.length > 25 
+                    ? file.name.substring(0, 22) + '...' 
+                    : file.name;
+            }
+            if (fileSizeEl) fileSizeEl.textContent = formatFileSize(file.size);
+            
+            if (uploadContent) uploadContent.classList.add('hidden');
+            if (previewContent) previewContent.classList.add('active');
+            uploadArea.classList.add('preview-active');
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            haptic(15);
+            
+            selectedFile = null;
+            fileInput.value = '';
+            if (previewImage) previewImage.src = '';
+            if (uploadContent) uploadContent.classList.remove('hidden');
+            if (previewContent) previewContent.classList.remove('active');
+            uploadArea.classList.remove('preview-active');
+        });
+    }
+    
+    console.log('✅ File upload ready');
 }
-
-removeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    haptic(15);
-    selectedFile = null;
-    fileInput.value = '';
-    previewImage.src = '';
-    uploadContent.classList.remove('hidden');
-    previewContent.classList.remove('active');
-});
 
 function formatFileSize(bytes) {
     if (bytes < 1024) return bytes + ' B';
@@ -846,219 +791,115 @@ function formatFileSize(bytes) {
 }
 
 // ============================================
-// INPUT VALIDATION VISUAL
+// SUBMIT BUTTON
 // ============================================
-if (isMobile) {
-    const inputs = document.querySelectorAll('input, textarea, select');
+function setupSubmit() {
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('dataForm');
     
-    inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            const value = this.value.trim();
-            this.classList.remove('input-valid');
-            
-            let isValid = false;
-            
-            if (this.type === 'email') {
-                isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            } else if (this.type === 'date') {
-                isValid = value !== '';
-            } else if (this.id === 'nama') {
-                isValid = value.length >= 3;
-            } else if (this.id === 'nisn') {
-                isValid = value.length >= 3;
-            } else if (this.id === 'alamat') {
-                isValid = value.length >= 1;
-            } else if (this.tagName === 'SELECT') {
-                isValid = value !== '';
-            } else {
-                isValid = value.length >= 1;
-            }
-            
-            if (isValid) {
-                this.classList.add('input-valid');
-                haptic(8);
-            }
-        });
+    if (!submitBtn || !form) return;
+    
+    const fresh = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(fresh, submitBtn);
+    
+    async function handleSubmit(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
-        if (input.tagName === 'SELECT') {
-            input.addEventListener('change', function() {
-                if (this.value !== '') {
-                    this.classList.add('input-valid');
-                    haptic(8);
-                } else {
-                    this.classList.remove('input-valid');
-                }
+        console.log('🎯 Submit clicked');
+        haptic([15, 30, 15, 30]);
+        
+        if (!validateStep(3)) return;
+        
+        fresh.classList.add('loading');
+        fresh.disabled = true;
+        fresh.style.pointerEvents = 'none';
+        
+        try {
+            const fileInput = document.getElementById('foto');
+            const file = fileInput.files[0];
+            
+            const base64Image = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
-        }
-    });
-}
-
-// ============================================
-// AUTO-HIDE HEADER
-// ============================================
-if (isMobile) {
-    const infoPanel = document.querySelector('.info-panel');
-    let lastScrollY = 0;
-    let headerHidden = false;
-    let headerScrollTimer;
-    
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.pageYOffset;
-        
-        if (currentScrollY > 200 && currentScrollY > lastScrollY && !headerHidden) {
-            infoPanel?.classList.add('header-hidden');
-            headerHidden = true;
-        }
-        
-        if (currentScrollY < lastScrollY && headerHidden) {
-            infoPanel?.classList.remove('header-hidden');
-            headerHidden = false;
-        }
-        
-        lastScrollY = currentScrollY;
-        
-        clearTimeout(headerScrollTimer);
-        headerScrollTimer = setTimeout(() => {
-            if (headerHidden) {
-                infoPanel?.classList.remove('header-hidden');
-                headerHidden = false;
-            }
-        }, 2000);
-    }, { passive: true });
-}
-
-// ============================================
-// PULL TO REFRESH
-// ============================================
-if (isMobile) {
-    const pullIndicator = document.createElement('div');
-    pullIndicator.className = 'pull-indicator';
-    pullIndicator.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none">
-            <path d="M12 4V1M12 1L8 5M12 1L16 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-    `;
-    document.body.appendChild(pullIndicator);
-    
-    let pullStartY = 0;
-    let pullCurrentY = 0;
-    let isPulling = false;
-    
-    window.addEventListener('touchstart', (e) => {
-        if (window.pageYOffset === 0) {
-            pullStartY = e.touches[0].screenY;
-            isPulling = true;
-        }
-    }, { passive: true });
-    
-    window.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
-        pullCurrentY = e.touches[0].screenY;
-        const deltaY = pullCurrentY - pullStartY;
-        
-        if (deltaY > 60 && deltaY < 150) {
-            pullIndicator.classList.add('show');
-        }
-    }, { passive: true });
-    
-    window.addEventListener('touchend', () => {
-        if (!isPulling) return;
-        
-        const deltaY = pullCurrentY - pullStartY;
-        
-        if (deltaY > 100) {
-            haptic(30);
+            
+            const formData = {
+                nama: document.getElementById('nama').value.trim(),
+                kelas: document.getElementById('kelas').value,
+                nisn: document.getElementById('nisn').value.trim(),
+                tempatLahir: document.getElementById('tempatLahir').value.trim(),
+                tanggalLahir: document.getElementById('tanggalLahir').value,
+                alamat: document.getElementById('alamat').value.trim(),
+                agama: document.getElementById('agama').value,
+                fotoBase64: base64Image,
+                fotoName: file.name,
+                fotoType: file.type,
+                timestamp: new Date().toLocaleString('id-ID')
+            };
+            
+            console.log('📤 Sending...');
+            
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            console.log('✅ Sent!');
+            
+            startConfetti();
+            
             setTimeout(() => {
-                pullIndicator.classList.remove('show');
-                window.scrollTo({ top: 0, behavior: 'auto' });
+                const modal = document.getElementById('successModal');
+                if (modal) modal.classList.add('active');
+                showToast('Data berhasil dikirim! 🎉', 'success');
+                
+                form.reset();
+                selectedFile = null;
+                document.querySelectorAll('.input-valid').forEach(el => el.classList.remove('input-valid'));
+                document.querySelectorAll('.has-valid').forEach(el => el.classList.remove('has-valid'));
+                
+                const previewImg = document.getElementById('previewImage');
+                const upContent = document.getElementById('uploadContent');
+                const prevContent = document.getElementById('previewContent');
+                const upArea = document.getElementById('uploadArea');
+                
+                if (previewImg) previewImg.src = '';
+                if (upContent) upContent.classList.remove('hidden');
+                if (prevContent) prevContent.classList.remove('active');
+                if (upArea) upArea.classList.remove('preview-active');
+                
+                currentStep = 1;
+                goToStep(1);
+                
+                try { localStorage.removeItem('formDraft'); } catch (err) {}
             }, 500);
-        } else {
-            pullIndicator.classList.remove('show');
+            
+        } catch (error) {
+            console.error('❌ Submit error:', error);
+            showToast('Gagal mengirim: ' + error.message, 'error');
+        } finally {
+            fresh.classList.remove('loading');
+            fresh.disabled = false;
+            fresh.style.pointerEvents = 'auto';
         }
-        
-        isPulling = false;
-        pullCurrentY = 0;
-    }, { passive: true });
-}
-
-// ============================================
-// FORM SUBMIT
-// ============================================
-form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    if (!validateStep(3)) return;
-    
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    haptic([15, 30, 15, 30]);
-    
-    try {
-        const base64Image = await convertToBase64(selectedFile);
-        
-        const formData = {
-            nama: document.getElementById('nama').value.trim(),
-            kelas: document.getElementById('kelas').value,
-            nisn: document.getElementById('nisn').value.trim(),
-            tempatLahir: document.getElementById('tempatLahir').value.trim(),
-            tanggalLahir: document.getElementById('tanggalLahir').value,
-            alamat: document.getElementById('alamat').value.trim(),
-            agama: document.getElementById('agama').value,
-            fotoBase64: base64Image,
-            fotoName: selectedFile.name,
-            fotoType: selectedFile.type,
-            timestamp: new Date().toLocaleString('id-ID')
-        };
-        
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
-        
-        startConfetti();
-        
-        setTimeout(() => {
-            showModal();
-            showToast('Data berhasil dikirim! 🎉', 'success');
-            resetForm();
-            try { localStorage.removeItem('formDraft'); } catch (e) {}
-        }, 500);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Terjadi kesalahan. Silakan coba lagi.', 'error');
-    } finally {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
     }
-});
-
-function convertToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-function resetForm() {
-    form.reset();
-    selectedFile = null;
-    fileInput.value = '';
-    previewImage.src = '';
-    uploadContent.classList.remove('hidden');
-    previewContent.classList.remove('active');
-    currentStep = 1;
-    goToStep(1);
     
-    document.querySelectorAll('.input-valid').forEach(el => el.classList.remove('input-valid'));
+    fresh.addEventListener('click', handleSubmit);
+    fresh.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        handleSubmit(e);
+    }, { passive: false });
+    
+    form.addEventListener('submit', handleSubmit);
+    
+    console.log('✅ Submit button ready');
 }
 
 // ============================================
@@ -1066,6 +907,8 @@ function resetForm() {
 // ============================================
 const confettiCanvas = document.getElementById('confettiCanvas');
 const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+let confettiPieces = [];
+let confettiRunning = false;
 
 function resizeConfetti() {
     if (!confettiCanvas) return;
@@ -1077,8 +920,6 @@ if (confettiCanvas) {
     resizeConfetti();
     window.addEventListener('resize', resizeConfetti);
 }
-
-let confettiPieces = [];
 
 class ConfettiPiece {
     constructor() {
@@ -1120,7 +961,8 @@ class ConfettiPiece {
 }
 
 function startConfetti() {
-    if (!confettiCtx) return;
+    if (!confettiCtx || confettiRunning) return;
+    confettiRunning = true;
     
     confettiPieces = [];
     const count = isLowEnd ? 30 : (isMobile ? 60 : 150);
@@ -1132,211 +974,78 @@ function startConfetti() {
     let frames = 0;
     const maxFrames = isMobile ? 120 : 200;
     
-    function animateConfetti() {
+    function animate() {
         confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-        
-        confettiPieces.forEach(piece => {
-            piece.update();
-            piece.draw();
-        });
-        
+        confettiPieces.forEach(p => { p.update(); p.draw(); });
         frames++;
         
         if (frames < maxFrames) {
-            requestAnimationFrame(animateConfetti);
+            requestAnimationFrame(animate);
         } else {
             confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiRunning = false;
         }
     }
     
-    animateConfetti();
+    animate();
 }
 
 // ============================================
-// UI HELPERS
+// MODAL
 // ============================================
-function showModal() {
-    document.getElementById('successModal').classList.add('active');
-    if (isMobile) haptic([20, 50, 20, 50, 20]);
-}
-
 function closeModal() {
-    document.getElementById('successModal').classList.remove('active');
+    const modal = document.getElementById('successModal');
+    if (modal) modal.classList.remove('active');
 }
 
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastIcon = toast.querySelector('.toast-icon');
-    
-    if (isMobile) {
-        if (type === 'error') haptic([30, 30, 30]);
-        else if (type === 'success') haptic([15, 30, 15]);
-    }
-    
-    if (type === 'error') {
-        toastIcon.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        `;
-    } else {
-        toastIcon.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `;
-    }
-    
-    toastMessage.textContent = message;
-    toast.className = 'toast show ' + type;
-    
-    setTimeout(() => { toast.classList.remove('show'); }, 3500);
-}
+window.closeModal = closeModal;
 
-document.getElementById('successModal').addEventListener('click', function(e) {
-    if (e.target === this || e.target.classList.contains('modal-backdrop')) {
-        closeModal();
-    }
-});
-
-// ============================================
-// INPUT ENHANCEMENTS
-// ============================================
-document.querySelectorAll('input, textarea, select').forEach(input => {
-    input.addEventListener('focus', function() {
-        this.parentElement.parentElement.classList.add('focused');
-    });
-    
-    input.addEventListener('blur', function() {
-        this.parentElement.parentElement.classList.remove('focused');
-    });
-    
-    input.addEventListener('input', function() {
-        this.style.animation = '';
-    });
-});
-
-document.getElementById('nisn').addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
-});
-
-// ============================================
-// AUTO-SAVE DRAFT
-// ============================================
-if (isMobile) {
-    const formFields = ['nama', 'kelas', 'nisn', 'tempatLahir', 'tanggalLahir', 'alamat', 'agama'];
-    
-    formFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('change', () => {
-                try {
-                    const savedData = JSON.parse(localStorage.getItem('formDraft') || '{}');
-                    savedData[fieldId] = field.value;
-                    localStorage.setItem('formDraft', JSON.stringify(savedData));
-                } catch (e) {}
-            });
-        }
-    });
-    
-    try {
-        const savedData = JSON.parse(localStorage.getItem('formDraft') || '{}');
-        Object.keys(savedData).forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field && savedData[fieldId]) {
-                field.value = savedData[fieldId];
-                field.classList.add('input-valid');
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('successModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+                closeModal();
             }
         });
-    } catch (e) {}
-}
-
-// ============================================
-// FLOATING TIPS
-// ============================================
-if (isMobile) {
-    const tipElement = document.createElement('div');
-    tipElement.style.cssText = `
-        position: fixed;
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%) translateY(100px);
-        background: linear-gradient(135deg, #fef9c3, #ffffff);
-        border: 1px solid rgba(202, 138, 4, 0.4);
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #7f1d1d;
-        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);
-        z-index: 999;
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-        opacity: 0;
-        pointer-events: none;
-        max-width: 90%;
-        text-align: center;
-    `;
-    document.body.appendChild(tipElement);
-    
-    function showTip(text) {
-        tipElement.textContent = text;
-        tipElement.style.transform = 'translateX(-50%) translateY(0)';
-        tipElement.style.opacity = '1';
-        
-        setTimeout(() => {
-            tipElement.style.transform = 'translateX(-50%) translateY(100px)';
-            tipElement.style.opacity = '0';
-        }, 3000);
     }
-    
-    let lastStep = 1;
-    setInterval(() => {
-        if (currentStep !== lastStep) {
-            lastStep = currentStep;
-            const stepTips = {
-                1: '✨ Isi data diri Anda dengan lengkap',
-                2: '📍 Masukkan alamat & agama',
-                3: '📸 Upload foto dengan seragam putih abu-abu'
-            };
-            showTip(stepTips[currentStep]);
-        }
-    }, 500);
-}
+});
 
 // ============================================
-// SMART SCROLL
+// LOGO FALLBACK
 // ============================================
-if (isMobile) {
-    document.querySelectorAll('input, textarea, select').forEach(input => {
-        input.addEventListener('focus', function() {
-            setTimeout(() => {
-                const rect = this.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                const keyboardHeight = 300;
-                const availableHeight = viewportHeight - keyboardHeight;
-                
-                if (rect.bottom > availableHeight) {
-                    const scrollAmount = rect.bottom - availableHeight + 30;
-                    window.scrollBy({ top: scrollAmount, behavior: 'auto' });
-                }
-            }, 300);
-        });
+const schoolLogo = document.getElementById('schoolLogo');
+const logoFallback = document.getElementById('logoFallback');
+
+if (schoolLogo) {
+    schoolLogo.addEventListener('error', function() {
+        this.style.display = 'none';
+        if (logoFallback) logoFallback.style.display = 'flex';
+    });
+    
+    schoolLogo.addEventListener('load', function() {
+        if (logoFallback) logoFallback.style.display = 'none';
     });
 }
 
 // ============================================
-// PREVENT DOUBLE-TAP ZOOM
+// NISN FILTER
+// ============================================
+const nisnField = document.getElementById('nisn');
+if (nisnField) {
+    nisnField.addEventListener('input', function() {
+        this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
+    });
+}
+
+// ============================================
+// DOUBLE TAP PREVENTION
 // ============================================
 if (isTouchDevice) {
     let lastTouchEnd = 0;
     document.addEventListener('touchend', (e) => {
         const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
+        if (now - lastTouchEnd <= 300) e.preventDefault();
         lastTouchEnd = now;
     }, { passive: false });
 }
@@ -1349,1403 +1058,50 @@ window.addEventListener('orientationchange', () => {
         resizeCanvas();
         resizeConfetti();
         initParticles();
-        window.scrollTo({ top: window.scrollY, behavior: 'auto' });
     }, 300);
 });
 
 // ============================================
-// DIAMOND PARTICLES - ADD MORE ON MOBILE
+// INITIALIZE ALL
 // ============================================
-if (isMobile) {
-    const backgroundEl = document.querySelector('.background');
-    if (backgroundEl) {
-        const existingDiamonds = document.querySelectorAll('.diamond-particle');
-        const targetCount = 5;
-        const currentCount = existingDiamonds.length;
-        
-        if (currentCount < targetCount) {
-            const colors = [
-                'linear-gradient(135deg, #fde047, #dc2626)',
-                'linear-gradient(135deg, #dc2626, #fde047)',
-                'linear-gradient(135deg, #ca8a04, #b91c1c)',
-                'linear-gradient(135deg, #eab308, #991b1b)',
-                'linear-gradient(135deg, #facc15, #7f1d1d)'
-            ];
-            
-            const positions = [
-                { x: '12%', d: '22s' },
-                { x: '35%', d: '28s' },
-                { x: '55%', d: '25s' },
-                { x: '75%', d: '30s' },
-                { x: '90%', d: '24s' }
-            ];
-            
-            for (let i = currentCount; i < targetCount; i++) {
-                const diamond = document.createElement('div');
-                diamond.className = 'diamond-particle';
-                diamond.style.setProperty('--x', positions[i].x);
-                diamond.style.setProperty('--d', positions[i].d);
-                diamond.style.background = colors[i % colors.length];
-                backgroundEl.appendChild(diamond);
-            }
-            
-            console.log(`💎 Added ${targetCount - currentCount} diamond particles`);
-        }
-    }
+function initAll() {
+    initInputValidation();
+    setupButtons();
+    setupFileUpload();
+    setupSubmit();
+    
+    // Set initial state
+    const prevBtn = document.getElementById('prevBtn');
+    if (prevBtn) prevBtn.style.display = 'none';
+    
+    console.log('');
+    console.log('════════════════════════════════════════');
+    console.log('✅ FORM READY');
+    console.log('════════════════════════════════════════');
+    console.log('✅ Typing effect: active');
+    console.log('✅ Input valid hijau: active');
+    console.log('✅ Step navigation: active');
+    console.log('✅ Submit button: active');
+    console.log('✅ File upload: active');
+    console.log('✅ Jam berputar: active');
+    console.log('✅ Ring upload: active');
+    console.log('✅ Particles: active');
+    console.log('════════════════════════════════════════');
 }
 
-// ============================================
-// PERFORMANCE MONITOR
-// ============================================
-if (isMobile) {
-    let frameCount = 0;
-    let lastCheck = performance.now();
-    let particleDisabled = false;
-    
-    function monitorPerformance() {
-        frameCount++;
-        const now = performance.now();
-        
-        if (now - lastCheck >= 1000) {
-            const fps = frameCount;
-            frameCount = 0;
-            lastCheck = now;
-            
-            // Jika FPS rendah, disable particles
-            if (fps < 20 && !particleDisabled && particleCanvas) {
-                console.log('⚠️ Low FPS (' + fps + '), disabling particles');
-                particleCanvas.style.display = 'none';
-                if (particleAnimationId) {
-                    cancelAnimationFrame(particleAnimationId);
-                    particleAnimationId = null;
-                }
-                particleDisabled = true;
-                return;
-            }
-        }
-        
-        requestAnimationFrame(monitorPerformance);
-    }
-    
-    // Monitor setelah 8 detik
-    setTimeout(monitorPerformance, 8000);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+} else {
+    setTimeout(initAll, 500);
 }
 
-// ============================================
-// INITIALIZE
-// ============================================
-updateClock();
-
-console.log('✅ Mobile Particle Edition loaded:', {
-    device: isOppo ? 'OPPO' : (isAndroid ? 'Android' : 'Mobile'),
-    mode: isLowEnd ? 'LOW-END' : (isMobile ? 'MOBILE' : 'DESKTOP'),
-    particles: isMobile ? 'Active (24 FPS)' : 'Active (60 FPS)',
-    diamonds: isMobile ? '5 diamond' : '3 diamond',
-    features: 'All interactive features active'
-});
-
-
-// ============================================
-// FIX: BLINKING ISSUE ON STEP 2 & 3
-// ============================================
-
-(function fixBlinkingIssue() {
-    console.log('🔧 Applying blinking fix...');
-    
-    // ============================================
-    // FIX 1: STOP STAGGER ANIMATION RESTART
-    // ============================================
-    // Hapus class 'active' dari form-step yang lama
-    // dan apply ke yang baru tanpa trigger animation ulang
-    const originalGoToStep = window.goToStep;
-    
-    if (typeof goToStep === 'function') {
-        window.goToStep = function(step) {
-            // Pause semua animasi sementara
-            document.body.style.pointerEvents = 'none';
-            
-            // Call original
-            originalGoToStep.call(this, step);
-            
-            // Force reflow & stabilize
-            requestAnimationFrame(() => {
-                // Hilangkan animasi yang mungkin restart
-                document.querySelectorAll('.form-step').forEach(el => {
-                    el.style.animation = 'none';
-                    void el.offsetHeight; // Force reflow
-                    el.style.animation = '';
-                });
-                
-                // Enable pointer lagi
-                document.body.style.pointerEvents = 'auto';
-            });
-        };
+// Re-init setelah loading screen hilang
+setTimeout(() => {
+    const loading = document.getElementById('loadingScreen');
+    if (loading && loading.classList.contains('hidden')) {
+        console.log('🔄 Re-initializing...');
+        setupButtons();
+        setupSubmit();
+        initInputValidation();
     }
-    
-    // ============================================
-    // FIX 2: STOP FLOATING TIPS YANG TRIGGER TERUS
-    // ============================================
-    // Hapus floating tips yang lama jika ada
-    document.querySelectorAll('[data-floating-tip]').forEach(el => el.remove());
-    
-    // Buat floating tips baru dengan flag
-    if (isMobile) {
-        const tipElement = document.createElement('div');
-        tipElement.setAttribute('data-floating-tip', 'true');
-        tipElement.style.cssText = `
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: linear-gradient(135deg, #fef9c3, #ffffff);
-            border: 1px solid rgba(202, 138, 4, 0.4);
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #7f1d1d;
-            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.25);
-            z-index: 999;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            opacity: 0;
-            pointer-events: none;
-            max-width: 90%;
-            text-align: center;
-        `;
-        document.body.appendChild(tipElement);
-        
-        let currentTipStep = 0;
-        let tipTimeout = null;
-        
-        function showTip(text) {
-            if (tipTimeout) clearTimeout(tipTimeout);
-            
-            tipElement.textContent = text;
-            tipElement.style.transform = 'translateX(-50%) translateY(0)';
-            tipElement.style.opacity = '1';
-            
-            tipTimeout = setTimeout(() => {
-                tipElement.style.transform = 'translateX(-50%) translateY(100px)';
-                tipElement.style.opacity = '0';
-            }, 2500);
-        }
-        
-        // Cek step changes dengan debounce
-        setInterval(() => {
-            if (currentStep !== currentTipStep) {
-                currentTipStep = currentStep;
-                const stepTips = {
-                    1: '✨ Isi data diri Anda dengan lengkap',
-                    2: '📍 Masukkan alamat & agama',
-                    3: '📸 Upload foto dengan seragam putih abu-abu'
-                };
-                if (stepTips[currentStep]) {
-                    showTip(stepTips[currentStep]);
-                }
-            }
-        }, 800); // Lebih lambat untuk hindari flicker
-    }
-    
-    // ============================================
-    // FIX 3: AUTO-HIDE HEADER TIDAK KEDIP
-    // ============================================
-    if (isMobile) {
-        const infoPanel = document.querySelector('.info-panel');
-        if (infoPanel) {
-            let headerHiddenTimer = null;
-            
-            // Remove old listeners dengan clone
-            const newInfoPanel = infoPanel.cloneNode(true);
-            infoPanel.parentNode.replaceChild(newInfoPanel, infoPanel);
-            
-            let lastScrollY = 0;
-            let headerHidden = false;
-            
-            window.addEventListener('scroll', () => {
-                const currentScrollY = window.pageYOffset;
-                const diff = Math.abs(currentScrollY - lastScrollY);
-                
-                // Hanya proses jika scroll signifikan
-                if (diff < 30) return;
-                
-                if (currentScrollY > 250 && currentScrollY > lastScrollY && !headerHidden) {
-                    newInfoPanel.classList.add('header-hidden');
-                    headerHidden = true;
-                } else if (currentScrollY < lastScrollY && headerHidden) {
-                    newInfoPanel.classList.remove('header-hidden');
-                    headerHidden = false;
-                }
-                
-                lastScrollY = currentScrollY;
-                
-                // Auto show kembali setelah 2 detik
-                if (headerHiddenTimer) clearTimeout(headerHiddenTimer);
-                headerHiddenTimer = setTimeout(() => {
-                    if (headerHidden) {
-                        newInfoPanel.classList.remove('header-hidden');
-                        headerHidden = false;
-                    }
-                }, 2000);
-            }, { passive: true });
-        }
-    }
-    
-    // ============================================
-    // FIX 4: STEP CLICK DEBOUNCE
-    // ============================================
-    if (isMobile) {
-        document.querySelectorAll('.step').forEach((stepEl) => {
-            // Remove old listeners
-            const newStepEl = stepEl.cloneNode(true);
-            stepEl.parentNode.replaceChild(newStepEl, stepEl);
-            
-            let isProcessing = false;
-            
-            newStepEl.addEventListener('click', () => {
-                if (isProcessing) return;
-                isProcessing = true;
-                
-                const targetStep = parseInt(newStepEl.dataset.step);
-                
-                if (targetStep !== currentStep) {
-                    haptic(15);
-                    
-                    if (targetStep < currentStep) {
-                        goToStep(targetStep);
-                    } else if (targetStep === currentStep + 1) {
-                        goToStep(targetStep);
-                    }
-                }
-                
-                setTimeout(() => { isProcessing = false; }, 400);
-            });
-        });
-    }
-    
-    // ============================================
-    // FIX 5: DISABLE INPUT ANIMATIONS THAT FLICKER
-    // ============================================
-    if (isMobile) {
-        // Stop input-valid class toggling yang bikin kedip
-        document.querySelectorAll('input, textarea, select').forEach(input => {
-            // Remove 'input-valid' class jika masih ada
-            input.classList.remove('input-valid');
-            
-            // Replace input listener dengan versi lebih ringan
-            const newInput = input.cloneNode(true);
-            input.parentNode.replaceChild(newInput, input);
-            
-            // Re-attach event listeners
-            newInput.addEventListener('focus', function() {
-                this.parentElement.parentElement.classList.add('focused');
-            });
-            
-            newInput.addEventListener('blur', function() {
-                this.parentElement.parentElement.classList.remove('focused');
-            });
-        });
-        
-        // Re-attach NISN filter
-        const nisnField = document.getElementById('nisn');
-        if (nisnField) {
-            nisnField.addEventListener('input', function() {
-                this.value = this.value.replace(/[^a-zA-Z0-9]/g, '');
-            });
-        }
-    }
-    
-    // ============================================
-    // FIX 6: STOP CONFETTI RESTART
-    // ============================================
-    // Flag untuk mencegah confetti dipanggil berkali-kali
-    let confettiRunning = false;
-    
-    const originalStartConfetti = window.startConfetti;
-    if (typeof startConfetti === 'function') {
-        window.startConfetti = function() {
-            if (confettiRunning) return;
-            confettiRunning = true;
-            
-            originalStartConfetti.call(this);
-            
-            setTimeout(() => {
-                confettiRunning = false;
-            }, 3500); // Sesuai maxFrames
-        };
-    }
-    
-    // ============================================
-    // FIX 7: MATIKAN SCROLL REVEAL DI MOBILE
-    // ============================================
-    if (isMobile) {
-        // Trigger semua reveal langsung
-        document.querySelectorAll('.reveal').forEach(el => {
-            el.classList.add('active');
-        });
-    }
-    
-    // ============================================
-    // FIX 8: STABILISASI PARTICLES - TIDAK RESTART
-    // ============================================
-    // Simpan particles agar tidak re-init saat resize
-    let particlesInitCount = 0;
-    const originalInitParticles = window.initParticles;
-    
-    if (typeof initParticles === 'function') {
-        window.initParticles = function() {
-            particlesInitCount++;
-            
-            // Limit re-init
-            if (particlesInitCount > 5) {
-                console.log('⚠️ Too many particle re-inits, skipping');
-                return;
-            }
-            
-            originalInitParticles.call(this);
-        };
-    }
-    
-    // ============================================
-    // FIX 9: PREVENT SCROLL JANK
-    // ============================================
-    if (isMobile) {
-        // Throttle scroll events
-        let scrollTimeout;
-        let isScrollingNow = false;
-        
-        window.addEventListener('scroll', () => {
-            if (!isScrollingNow) {
-                isScrollingNow = true;
-                document.body.classList.add('scrolling-active');
-            }
-            
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                isScrollingNow = false;
-                document.body.classList.remove('scrolling-active');
-            }, 100);
-        }, { passive: true });
-        
-        // CSS untuk stabil saat scroll
-        const scrollStyle = document.createElement('style');
-        scrollStyle.textContent = `
-            body.scrolling-active .form-step,
-            body.scrolling-active .form-group,
-            body.scrolling-active .input-wrapper {
-                pointer-events: none;
-            }
-        `;
-        document.head.appendChild(scrollStyle);
-    }
-    
-    // ============================================
-    // FIX 10: FORCE STABLE STEP TRANSITION
-    // ============================================
-    // Observer untuk pastikan form-step stabil
-    if (typeof MutationObserver !== 'undefined') {
-        const stepObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    const el = mutation.target;
-                    if (el.classList.contains('form-step') && el.classList.contains('active')) {
-                        // Pastikan opacity final = 1
-                        el.style.opacity = '1';
-                    }
-                }
-            });
-        });
-        
-        document.querySelectorAll('.form-step').forEach(el => {
-            stepObserver.observe(el, { attributes: true });
-        });
-    }
-    
-    console.log('✅ Blinking fix applied successfully');
-    console.log('   - Form step animation: stabilized');
-    console.log('   - Form group stagger: disabled');
-    console.log('   - Floating tips: throttled');
-    console.log('   - Auto-hide header: debounced');
-    console.log('   - Step click: protected');
-    console.log('   - Input animations: simplified');
-})();
-
-// ============================================
-// ADDITIONAL: FORCE STABLE RENDERING
-// ============================================
-(function forceStableRendering() {
-    if (!isMobile) return;
-    
-    // Pastikan semua form-step punya opacity 1
-    document.querySelectorAll('.form-step').forEach(el => {
-        el.style.willChange = 'auto';
-        el.style.transform = 'none';
-        el.style.backfaceVisibility = 'hidden';
-        el.style.webkitBackfaceVisibility = 'hidden';
-    });
-    
-    // Force GPU layer untuk form-card
-    const formCard = document.querySelector('.form-card');
-    if (formCard) {
-        formCard.style.transform = 'translateZ(0)';
-        formCard.style.webkitTransform = 'translateZ(0)';
-    }
-    
-    console.log('✅ Stable rendering enforced');
-})();
-
-// ============================================
-// MONITOR: DETECT BLINKING
-// ============================================
-if (isMobile) {
-    let lastOpacity = {};
-    
-    setInterval(() => {
-        document.querySelectorAll('.form-step').forEach((el, index) => {
-            const opacity = window.getComputedStyle(el).opacity;
-            
-            if (lastOpacity[index] !== undefined && 
-                lastOpacity[index] !== opacity && 
-                el.classList.contains('active')) {
-                // Opacity berubah = kemungkinan kedip
-                console.warn('⚠️ Opacity change detected on step', index + 1, 
-                             ': ', lastOpacity[index], '→', opacity);
-            }
-            
-            lastOpacity[index] = opacity;
-        });
-    }, 200);
-}
-// ============================================
-// RESTORE: TYPING EFFECT + INPUT VALID GREEN
-// Versi aman tanpa kedip (debounced)
-// ============================================
-
-(function restoreTypingAndInputValid() {
-    console.log('🔧 Restoring typing effect & input valid green...');
-    
-    // ============================================
-    // 1. TYPING EFFECT - VERSI STABIL
-    // ============================================
-    const typingTextEl = document.getElementById('typingText');
-    
-    if (typingTextEl) {
-        const typingWords = ['Siswa', 'SMAN', 'Satu', 'Pangkalan', 'Lesung', 'Hebat'];
-        let typingWordIndex = 0;
-        let typingCharIndex = 0;
-        let typingIsDeleting = false;
-        let typingTimer = null;
-        let typingActive = true;
-        
-        function runTyping() {
-            if (!typingActive) return;
-            
-            const currentWord = typingWords[typingWordIndex];
-            
-            if (typingIsDeleting) {
-                typingTextEl.textContent = currentWord.substring(0, typingCharIndex - 1);
-                typingCharIndex--;
-            } else {
-                typingTextEl.textContent = currentWord.substring(0, typingCharIndex + 1);
-                typingCharIndex++;
-            }
-            
-            let typeSpeed = typingIsDeleting ? 70 : 130;
-            
-            if (!typingIsDeleting && typingCharIndex === currentWord.length) {
-                typeSpeed = 2200; // Pause setelah selesai mengetik
-                typingIsDeleting = true;
-            } else if (typingIsDeleting && typingCharIndex === 0) {
-                typingIsDeleting = false;
-                typingWordIndex = (typingWordIndex + 1) % typingWords.length;
-                typeSpeed = 500;
-            }
-            
-            typingTimer = setTimeout(runTyping, typeSpeed);
-        }
-        
-        // Start typing setelah loading screen
-        setTimeout(() => {
-            runTyping();
-        }, 1800);
-        
-        // Pause typing saat tab tidak aktif (hemat resource)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                typingActive = false;
-                if (typingTimer) clearTimeout(typingTimer);
-            } else {
-                if (!typingActive) {
-                    typingActive = true;
-                    runTyping();
-                }
-            }
-        });
-        
-        console.log('✅ Typing effect restored');
-    }
-    
-    // ============================================
-    // 2. INPUT VALID HIJAU - VERSI DEBOUNCED
-    // ============================================
-    const debounceTimers = new Map();
-    const DEBOUNCE_DELAY = 400; // ms
-    
-    function validateInput(input) {
-        const value = input.value.trim();
-        let isValid = false;
-        
-        // Cek berdasarkan tipe & id
-        if (input.type === 'email') {
-            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        } else if (input.type === 'date') {
-            isValid = value !== '';
-        } else if (input.type === 'tel') {
-            isValid = /^[0-9+\-\s()]{8,15}$/.test(value);
-        } else if (input.id === 'nama') {
-            isValid = value.length >= 3;
-        } else if (input.id === 'nisn') {
-            isValid = value.length >= 3;
-        } else if (input.id === 'alamat') {
-            isValid = value.length >= 1;
-        } else if (input.id === 'tempatLahir') {
-            isValid = value.length >= 2;
-        } else if (input.tagName === 'SELECT') {
-            isValid = value !== '';
-        } else if (input.tagName === 'TEXTAREA') {
-            isValid = value.length >= 1;
-        } else {
-            isValid = value.length >= 1;
-        }
-        
-        return isValid;
-    }
-    
-    function applyValidState(input, isValid) {
-        if (isValid) {
-            if (!input.classList.contains('input-valid')) {
-                input.classList.add('input-valid');
-                // Haptic ringan (hanya sekali saat transition to valid)
-                if (isMobile && typeof haptic === 'function') {
-                    haptic(8);
-                }
-            }
-        } else {
-            input.classList.remove('input-valid');
-        }
-    }
-    
-    // Attach ke semua input
-    const allInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="date"], textarea, select');
-    
-    allInputs.forEach(input => {
-        // Skip hidden file input
-        if (input.type === 'file' || input.type === 'checkbox') return;
-        
-        // On input - debounced
-        input.addEventListener('input', function() {
-            const inputEl = this;
-            
-            // Clear timer lama untuk input ini
-            if (debounceTimers.has(inputEl)) {
-                clearTimeout(debounceTimers.get(inputEl));
-            }
-            
-            // Set timer baru
-            const timer = setTimeout(() => {
-                const isValid = validateInput(inputEl);
-                applyValidState(inputEl, isValid);
-                debounceTimers.delete(inputEl);
-            }, DEBOUNCE_DELAY);
-            
-            debounceTimers.set(inputEl, timer);
-        });
-        
-        // On blur - immediate check
-        input.addEventListener('blur', function() {
-            // Cancel pending debounce
-            if (debounceTimers.has(this)) {
-                clearTimeout(debounceTimers.get(this));
-                debounceTimers.delete(this);
-            }
-            
-            const isValid = validateInput(this);
-            applyValidState(this, isValid);
-        });
-        
-        // On change untuk select - immediate
-        if (input.tagName === 'SELECT') {
-            input.addEventListener('change', function() {
-                const isValid = validateInput(this);
-                applyValidState(this, isValid);
-            });
-        }
-        
-        // Restore valid state jika sudah ada value (saat draft load)
-        setTimeout(() => {
-            if (input.value.trim() !== '') {
-                const isValid = validateInput(input);
-                applyValidState(input, isValid);
-            }
-        }, 1500);
-    });
-    
-    console.log(`✅ Input valid green restored for ${allInputs.length} inputs`);
-    
-    // ============================================
-    // 3. RESET VALID STATE SAAT FORM DI-RESET
-    // ============================================
-    const dataForm = document.getElementById('dataForm');
-    if (dataForm) {
-        // Observe reset
-        const originalReset = dataForm.reset.bind(dataForm);
-        dataForm.reset = function() {
-            originalReset();
-            // Remove all valid states
-            document.querySelectorAll('.input-valid').forEach(el => {
-                el.classList.remove('input-valid');
-            });
-            console.log('🔄 Form reset - valid states cleared');
-        };
-    }
-    
-    // ============================================
-    // 4. STEP COMPLETED - HIJAU
-    // ============================================
-    // Observer untuk step completion
-    const stepObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.target.classList.contains('step') && 
-                mutation.target.classList.contains('completed')) {
-                // Pastikan step line berikutnya juga hijau
-                const stepIndex = Array.from(document.querySelectorAll('.step')).indexOf(mutation.target);
-                const stepLines = document.querySelectorAll('.step-line');
-                if (stepLines[stepIndex]) {
-                    stepLines[stepIndex].classList.add('completed');
-                }
-            }
-        });
-    });
-    
-    document.querySelectorAll('.step').forEach(step => {
-        stepObserver.observe(step, { attributes: true, attributeFilter: ['class'] });
-    });
-    
-    // ============================================
-    // 5. FIX: TYPING TEXT TIDAK KOSONG SAAT LOADING
-    // ============================================
-    // Pastikan typing text punya konten default
-    if (typingTextEl && !typingTextEl.textContent.trim()) {
-        typingTextEl.textContent = 'Siswa';
-    }
-    
-    // ============================================
-    // 6. SMOOTH TRANSITION UNTUK INPUT VALID
-    // ============================================
-    // Tambahkan style untuk smooth transition (kalau belum ada)
-    if (!document.getElementById('input-valid-style')) {
-        const style = document.createElement('style');
-        style.id = 'input-valid-style';
-        style.textContent = `
-            .input-wrapper input.input-valid,
-            .input-wrapper textarea.input-valid,
-            .input-wrapper select.input-valid {
-                border-color: #22c55e !important;
-                background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%) !important;
-                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12), 0 4px 12px -4px rgba(34, 197, 94, 0.2) !important;
-            }
-            
-            .input-wrapper input.input-valid ~ .input-icon,
-            .input-wrapper textarea.input-valid ~ .input-icon,
-            .input-wrapper select.input-valid ~ .input-icon {
-                color: #22c55e !important;
-            }
-            
-            .form-group:has(.input-valid) label {
-                color: #15803d !important;
-            }
-            
-            .form-group:has(.input-valid) .label-number {
-                background: linear-gradient(135deg, #86efac, #22c55e) !important;
-                color: white !important;
-                border-color: #16a34a !important;
-            }
-            
-            .step.completed .step-circle {
-                background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-                border-color: #15803d !important;
-                color: white !important;
-                box-shadow: 0 0 15px rgba(34, 197, 94, 0.5) !important;
-            }
-            
-            /* Typing cursor animation */
-            .gold-text::after {
-                animation: cursorBlink 0.8s step-end infinite !important;
-            }
-            
-            @keyframes cursorBlink {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    console.log('✅ All restorations complete:');
-    console.log('   - Typing effect: active');
-    console.log('   - Input valid green: active');
-    console.log('   - Step completed green: active');
-    console.log('   - Debounce: 400ms');
-})();
-
-// ============================================
-// HIDE RING SAAT FOTO SUDAH DIUPLOAD
-// ============================================
-
-(function autoHideRing() {
-    const uploadAreaEl = document.getElementById('uploadArea');
-    const previewContentEl = document.getElementById('previewContent');
-    
-    if (!uploadAreaEl || !previewContentEl) return;
-    
-    // Observer untuk cek class 'active' pada preview
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'class') {
-                if (previewContentEl.classList.contains('active')) {
-                    // Foto sudah diupload - sembunyikan ring
-                    uploadAreaEl.classList.add('preview-active');
-                } else {
-                    // Foto dihapus - tampilkan ring lagi
-                    uploadAreaEl.classList.remove('preview-active');
-                }
-            }
-        });
-    });
-    
-    observer.observe(previewContentEl, { attributes: true, attributeFilter: ['class'] });
-    
-    // Cek saat load
-    if (previewContentEl.classList.contains('active')) {
-        uploadAreaEl.classList.add('preview-active');
-    }
-    
-    console.log('✅ Upload ring auto-hide active');
-})();
-
-// ============================================
-// FIX: TOMBOL KIRIM DATA TIDAK BERFUNGSI DI HP
-// Deteksi & perbaiki semua kemungkinan penyebab
-// ============================================
-
-(function fixSubmitButton() {
-    console.log('🔧 Fixing submit button functionality...');
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const dataForm = document.getElementById('dataForm');
-    
-    if (!submitBtn || !dataForm) {
-        console.error('❌ Submit button or form not found!');
-        return;
-    }
-    
-    // ============================================
-    // FIX 1: HAPUS SEMUA EVENT LISTENER LAMA
-    // ============================================
-    // Clone button untuk hapus semua listener
-    const freshSubmitBtn = submitBtn.cloneNode(true);
-    submitBtn.parentNode.replaceChild(freshSubmitBtn, submitBtn);
-    
-    // Update reference
-    const newSubmitBtn = document.getElementById('submitBtn');
-    
-    console.log('✅ Submit button event listeners cleared');
-    
-    // ============================================
-    // FIX 2: PASTIKAN TOMBOL BISA DI-KLIK
-    // ============================================
-    newSubmitBtn.style.pointerEvents = 'auto';
-    newSubmitBtn.style.touchAction = 'manipulation';
-    newSubmitBtn.style.cursor = 'pointer';
-    newSubmitBtn.style.webkitTapHighlightColor = 'transparent';
-    
-    // Pastikan z-index tinggi
-    newSubmitBtn.style.position = 'relative';
-    newSubmitBtn.style.zIndex = '10';
-    
-    // ============================================
-    // FIX 3: DETEKSI TOMBOL YANG TERTUTUP
-    // ============================================
-    function isButtonCovered() {
-        const rect = newSubmitBtn.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        // Cek element yang ada di atas tombol
-        const elementAtPoint = document.elementFromPoint(centerX, centerY);
-        
-        if (elementAtPoint === newSubmitBtn || newSubmitBtn.contains(elementAtPoint)) {
-            return false; // Tidak tertutup
-        }
-        
-        // Log element yang menutupi
-        if (elementAtPoint) {
-            console.warn('⚠️ Button covered by:', elementAtPoint.className, elementAtPoint.tagName);
-            return elementAtPoint;
-        }
-        
-        return false;
-    }
-    
-    // Cek setiap 2 detik saat di step 3
-    setInterval(() => {
-        if (currentStep === 3 && newSubmitBtn.style.display !== 'none') {
-            const cover = isButtonCovered();
-            if (cover && cover !== false) {
-                console.warn('🚨 Submit button covered! Fixing...');
-                cover.style.pointerEvents = 'none';
-            }
-        }
-    }, 2000);
-    
-    // ============================================
-    // FIX 4: EVENT LISTENER BARU UNTUK SUBMIT
-    // ============================================
-    async function handleSubmit(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('🎯 Submit button clicked!');
-        
-        // Haptic feedback
-        if (isMobile && typeof haptic === 'function') {
-            haptic([15, 30, 15, 30]);
-        }
-        
-        // ============================================
-        // VALIDASI SEBELUM SUBMIT
-        // ============================================
-        
-        // 1. Cek apakah foto sudah diupload
-        const fileInput = document.getElementById('foto');
-        const previewContent = document.getElementById('previewContent');
-        
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            console.warn('❌ No file uploaded');
-            if (typeof showToast === 'function') {
-                showToast('Upload foto terlebih dahulu!', 'error');
-            } else {
-                alert('Upload foto terlebih dahulu!');
-            }
-            if (typeof shakeElement === 'function') {
-                shakeElement(document.getElementById('uploadArea'));
-            }
-            return;
-        }
-        
-        // 2. Cek terms checkbox
-        const termsCheckbox = document.getElementById('terms');
-        if (!termsCheckbox || !termsCheckbox.checked) {
-            console.warn('❌ Terms not checked');
-            if (typeof showToast === 'function') {
-                showToast('Centang pernyataan terlebih dahulu!', 'error');
-            } else {
-                alert('Centang pernyataan terlebih dahulu!');
-            }
-            if (typeof shakeElement === 'function') {
-                shakeElement(document.querySelector('.checkbox-wrapper'));
-            }
-            return;
-        }
-        
-        // 3. Cek semua field wajib
-        const requiredFields = [
-            { id: 'nama', label: 'Nama Lengkap', min: 3 },
-            { id: 'kelas', label: 'Kelas', isSelect: true },
-            { id: 'nisn', label: 'NISN', min: 3 },
-            { id: 'tempatLahir', label: 'Tempat Lahir', min: 2 },
-            { id: 'tanggalLahir', label: 'Tanggal Lahir', isDate: true },
-            { id: 'alamat', label: 'Alamat', min: 1 },
-            { id: 'agama', label: 'Agama', isSelect: true }
-        ];
-        
-        for (const field of requiredFields) {
-            const el = document.getElementById(field.id);
-            if (!el) continue;
-            
-            const value = el.value.trim();
-            let isValid = false;
-            
-            if (field.isSelect) {
-                isValid = value !== '';
-            } else if (field.isDate) {
-                isValid = value !== '';
-            } else {
-                isValid = value.length >= (field.min || 1);
-            }
-            
-            if (!isValid) {
-                console.warn(`❌ Field ${field.id} invalid`);
-                if (typeof showToast === 'function') {
-                    showToast(`${field.label} wajib diisi dengan benar!`, 'error');
-                } else {
-                    alert(`${field.label} wajib diisi dengan benar!`);
-                }
-                if (typeof shakeElement === 'function') {
-                    shakeElement(el);
-                }
-                return;
-            }
-        }
-        
-        // ============================================
-        // SUBMIT DATA
-        // ============================================
-        console.log('✅ All validations passed, submitting...');
-        
-        // Set loading state
-        newSubmitBtn.classList.add('loading');
-        newSubmitBtn.disabled = true;
-        newSubmitBtn.style.pointerEvents = 'none';
-        
-        try {
-            // Cek SCRIPT_URL
-            if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
-                throw new Error('SCRIPT_URL belum dikonfigurasi!');
-            }
-            
-            // Convert image to base64
-            const file = fileInput.files[0];
-            const base64Image = await convertToBase64Safe(file);
-            
-            // Prepare data
-            const formData = {
-                nama: document.getElementById('nama').value.trim(),
-                kelas: document.getElementById('kelas').value,
-                nisn: document.getElementById('nisn').value.trim(),
-                tempatLahir: document.getElementById('tempatLahir').value.trim(),
-                tanggalLahir: document.getElementById('tanggalLahir').value,
-                alamat: document.getElementById('alamat').value.trim(),
-                agama: document.getElementById('agama').value,
-                fotoBase64: base64Image,
-                fotoName: file.name,
-                fotoType: file.type,
-                timestamp: new Date().toLocaleString('id-ID')
-            };
-            
-            console.log('📤 Sending data to:', SCRIPT_URL.substring(0, 50) + '...');
-            
-            // Kirim ke Google Apps Script
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            
-            console.log('✅ Data sent successfully!');
-            
-            // Trigger confetti
-            if (typeof startConfetti === 'function') {
-                startConfetti();
-            }
-            
-            // Show success after short delay
-            setTimeout(() => {
-                if (typeof showModal === 'function') {
-                    showModal();
-                }
-                if (typeof showToast === 'function') {
-                    showToast('Data berhasil dikirim! 🎉', 'success');
-                }
-                
-                // Reset form
-                if (typeof resetForm === 'function') {
-                    resetForm();
-                } else {
-                    dataForm.reset();
-                }
-                
-                // Clear localStorage draft
-                try { localStorage.removeItem('formDraft'); } catch (e) {}
-            }, 500);
-            
-        } catch (error) {
-            console.error('❌ Submit error:', error);
-            
-            if (typeof showToast === 'function') {
-                showToast('Gagal mengirim: ' + error.message, 'error');
-            } else {
-                alert('Gagal mengirim data. Silakan coba lagi.');
-            }
-        } finally {
-            // Reset loading state
-            newSubmitBtn.classList.remove('loading');
-            newSubmitBtn.disabled = false;
-            newSubmitBtn.style.pointerEvents = 'auto';
-        }
-    }
-    
-    // Attach event listeners
-    newSubmitBtn.addEventListener('click', handleSubmit);
-    newSubmitBtn.addEventListener('touchend', function(e) {
-        // Prevent double-trigger
-        e.preventDefault();
-        handleSubmit(e);
-    }, { passive: false });
-    
-    // ============================================
-    // FIX 5: FORM SUBMIT HANDLER
-    // ============================================
-    // Remove old submit listener
-    const freshForm = dataForm.cloneNode(true);
-    // Re-attach semua element references
-    dataForm.parentNode.replaceChild(freshForm, dataForm);
-    
-    // Re-attach submit handler ke form baru
-    const newForm = document.getElementById('dataForm');
-    
-    newForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Trigger button click
-        const btn = document.getElementById('submitBtn');
-        if (btn) {
-            handleSubmit(new Event('click'));
-        }
-    });
-    
-    console.log('✅ Submit handler attached');
-    
-    // ============================================
-    // FIX 6: ENSURE VALIDATION FEEDBACK
-    // ============================================
-    function showValidationError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-        if (!field) return;
-        
-        // Add error class
-        const formGroup = field.closest('.form-group');
-        if (formGroup) {
-            formGroup.classList.add('error');
-            setTimeout(() => formGroup.classList.remove('error'), 500);
-        }
-        
-        // Show toast
-        if (typeof showToast === 'function') {
-            showToast(message, 'error');
-        }
-        
-        // Vibrate
-        if (isMobile && typeof haptic === 'function') {
-            haptic([50, 30, 50]);
-        }
-        
-        // Scroll into view
-        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Focus
-        setTimeout(() => field.focus(), 300);
-    }
-    
-    // ============================================
-    // FIX 7: DEBUG MODE
-    // ============================================
-    // Tambah flag untuk debug
-    window.debugSubmit = function() {
-        console.log('🔍 Debug Info:');
-        console.log('- Current Step:', currentStep);
-        console.log('- Total Steps:', totalSteps);
-        console.log('- Button Display:', newSubmitBtn.style.display);
-        console.log('- Button Disabled:', newSubmitBtn.disabled);
-        console.log('- Button PointerEvents:', newSubmitBtn.style.pointerEvents);
-        console.log('- File Input:', fileInput?.files?.length || 0, 'file(s)');
-        console.log('- Terms Checked:', document.getElementById('terms')?.checked);
-        console.log('- SCRIPT_URL:', SCRIPT_URL);
-        
-        // Cek semua field
-        const fields = ['nama', 'kelas', 'nisn', 'tempatLahir', 'tanggalLahir', 'alamat', 'agama'];
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            console.log(`- ${id}:`, el ? `"${el.value}"` : 'NOT FOUND');
-        });
-        
-        // Cek apakah button tertutup
-        const cover = isButtonCovered();
-        if (cover) {
-            console.warn('🚨 Button covered by:', cover);
-        } else {
-            console.log('✅ Button is visible and clickable');
-        }
-    };
-    
-    console.log('✅ Fix complete. Type debugSubmit() in console for debug info.');
-})();
-
-// ============================================
-// HELPER: Convert to base64 (safe version)
-// ============================================
-function convertToBase64Safe(file) {
-    return new Promise((resolve, reject) => {
-        if (!file) {
-            reject(new Error('File tidak ada'));
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = () => {
-            try {
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            } catch (e) {
-                reject(e);
-            }
-        };
-        reader.onerror = () => reject(new Error('Gagal membaca file'));
-        reader.readAsDataURL(file);
-    });
-}
-
-// ============================================
-// FIX CSS: PASTIKAN TOMBOL BISA DI-KLIK
-// ============================================
-(function fixSubmitButtonCSS() {
-    const style = document.createElement('style');
-    style.id = 'submit-button-fix';
-    style.textContent = `
-        /* === SUBMIT BUTTON FIX === */
-        #submitBtn,
-        .submit-btn {
-            pointer-events: auto !important;
-            cursor: pointer !important;
-            touch-action: manipulation !important;
-            -webkit-tap-highlight-color: transparent !important;
-            position: relative !important;
-            z-index: 10 !important;
-            user-select: none !important;
-            -webkit-user-select: none !important;
-        }
-        
-        /* Pastikan tidak ada overlay yang menutupi */
-        #submitBtn::before,
-        #submitBtn::after {
-            pointer-events: none !important;
-        }
-        
-        /* Loading state */
-        #submitBtn.loading {
-            pointer-events: none !important;
-            cursor: wait !important;
-        }
-        
-        /* Pastikan anak-anak button juga bisa di-klik */
-        #submitBtn * {
-            pointer-events: none !important;
-        }
-        
-        /* === MOBILE SPECIFIC === */
-        @media (max-width: 768px) {
-            #submitBtn {
-                min-height: 52px;
-                font-size: 0.95rem;
-                padding: 16px 24px;
-                width: 100%;
-            }
-            
-            /* Pastikan tidak ada yang menutupi */
-            .form-navigation {
-                position: relative;
-                z-index: 5;
-            }
-            
-            /* Step indicator di atas tombol */
-            .step-indicator {
-                z-index: 1;
-            }
-            
-            /* Form group di atas */
-            .form-group {
-                position: relative;
-                z-index: 2;
-            }
-            
-            /* Checkbox di atas */
-            .terms-wrapper,
-            .checkbox-wrapper {
-                position: relative;
-                z-index: 3;
-            }
-            
-            /* Preview foto di atas */
-            .upload-area,
-            .preview-content {
-                position: relative;
-                z-index: 3;
-            }
-            
-            /* Toast di atas */
-            .toast {
-                z-index: 1001;
-            }
-            
-            /* Modal di atas */
-            .modal {
-                z-index: 1000;
-            }
-        }
-        
-        /* === FIX: REMOVE POINTER-EVENTS NONE === */
-        body.scrolling-active #submitBtn,
-        body.scrolling-active .submit-btn,
-        body.scrolling-active .nav-btn {
-            pointer-events: auto !important;
-        }
-        
-        /* === FIX: REMOVE CONTAIN YANG BISA HALANGI CLICK === */
-        .form-navigation,
-        .submit-btn,
-        #submitBtn {
-            contain: none !important;
-        }
-        
-        /* === FIX: STEP 3 BUTTON Z-INDEX === */
-        .form-step[data-step="3"] .form-navigation {
-            position: relative;
-            z-index: 20;
-        }
-        
-        /* === FIX: CHECKBOX === */
-        .checkbox-wrapper {
-            position: relative;
-            z-index: 2;
-            cursor: pointer;
-        }
-        
-        .checkbox-wrapper input[type="checkbox"] {
-            cursor: pointer;
-            pointer-events: auto !important;
-            position: relative;
-            z-index: 3;
-        }
-        
-        /* === FIX: UPLOAD AREA === */
-        .upload-area {
-            position: relative;
-            z-index: 2;
-        }
-        
-        /* === FIX: PREVIEW CONTENT === */
-        .preview-content {
-            position: relative;
-            z-index: 2;
-        }
-        
-        /* === FIX: REMOVE CSS THAT PREVENTS CLICK === */
-        @media (max-width: 768px) {
-            .submit-btn,
-            .submit-btn * {
-                backface-visibility: visible !important;
-                -webkit-backface-visibility: visible !important;
-                transform-style: flat !important;
-            }
-        }
-    `;
-    
-    // Remove old style if exists
-    const oldStyle = document.getElementById('submit-button-fix');
-    if (oldStyle) oldStyle.remove();
-    
-    document.head.appendChild(style);
-    console.log('✅ Submit button CSS fix applied');
-})();
-
-// ============================================
-// AUTO-DETECT & FIX SUBMIT ISSUES
-// ============================================
-(function autoDetectSubmitIssues() {
-    // Cek setiap 3 detik
-    setInterval(() => {
-        const submitBtn = document.getElementById('submitBtn');
-        if (!submitBtn) return;
-        
-        // Skip jika button tidak visible
-        if (submitBtn.style.display === 'none') return;
-        
-        // Cek 1: Button tertutup?
-        const rect = submitBtn.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
-            console.warn('⚠️ Submit button has 0 size');
-            submitBtn.style.minHeight = '52px';
-            submitBtn.style.width = '100%';
-        }
-        
-        // Cek 2: Button di luar viewport?
-        if (rect.top < 0 || rect.bottom > window.innerHeight) {
-            // Normal saat belum scroll
-        }
-        
-        // Cek 3: Element di atas button?
-        if (rect.width > 0 && rect.height > 0) {
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const elementAtPoint = document.elementFromPoint(centerX, centerY);
-            
-            if (elementAtPoint && 
-                elementAtPoint !== submitBtn && 
-                !submitBtn.contains(elementAtPoint)) {
-                console.warn('⚠️ Submit button covered by:', elementAtPoint.className);
-                
-                // Force fix
-                if (elementAtPoint.style) {
-                    elementAtPoint.style.pointerEvents = 'none';
-                }
-                submitBtn.style.zIndex = '9999';
-            }
-        }
-    }, 3000);
-    
-    console.log('✅ Auto-detect submit issues active');
-})();
-
-// ============================================
-// FIX: PASTIKAN VALIDASI TIDAK SILENT
-// ============================================
-(function ensureValidationFeedback() {
-    // Override validateStep untuk tambah feedback
-    const originalValidateStep = window.validateStep;
-    
-    if (typeof validateStep === 'function') {
-        window.validateStep = function(step) {
-            const result = originalValidateStep.call(this, step);
-            
-            if (!result && isMobile) {
-                // Vibrate untuk feedback
-                if (typeof haptic === 'function') {
-                    haptic([30, 50, 30]);
-                }
-                
-                console.log('❌ Validation failed on step', step);
-            }
-            
-            return result;
-        };
-    }
-    
-    console.log('✅ Validation feedback enhanced');
-})();
-
-// ============================================
-// FINAL LOG
-// ============================================
-console.log('');
-console.log('════════════════════════════════════════');
-console.log('🔧 SUBMIT BUTTON FIX LOADED');
-console.log('════════════════════════════════════════');
-console.log('✅ Event listeners refreshed');
-console.log('✅ Pointer events enabled');
-console.log('✅ Z-index optimized');
-console.log('✅ Auto-detect active');
-console.log('✅ Validation feedback enhanced');
-console.log('');
-console.log('💡 Debug: Type "debugSubmit()" in console');
-console.log('════════════════════════════════════════');
+}, 4000);
